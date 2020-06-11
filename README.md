@@ -4,7 +4,10 @@ A decoder for the semion code based on neural networks. The semion code is embed
 ](https://arxiv.org/abs/2002.08666) to determine the error threshold of the semion code. In [arXiv:2002.08666
 ](https://arxiv.org/abs/2002.08666) the algorithm and training is explained in detail.
 
-![Semion code on hexagonal lattice with distance 4.](hexagonal_lattice_4.png)
+<!-- ![Semion code on hexagonal lattice with distance 4.](hexagonal_lattice_4.png) -->
+<p align="center">
+  <img src="hexagonal_lattice_4.png" width="500">
+</p>
 
 The neural networks are trained to predict which logical error was produced by a simple decoder. Therefore the decoding process is turned into a classification task with 16 categories. Given the error syndrome, i.e., the 0 or 1 state of each vertex and plaquette in the lattice, the model has to predict the category.
 
