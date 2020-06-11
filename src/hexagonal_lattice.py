@@ -679,16 +679,19 @@ class HexagonalLattice:
         plt.plot((pos[0]+delta_x)*.5*self.w,
                  (pos[1]+delta_y)*.25*self.h, **kwargs)
 
-    def plot_lattice(self, p_numbers=True, v_numbers=True, e_numbers=False):
+    def plot_lattice(self, p_numbers=True, v_numbers=True, e_numbers=False,
+                     axis=False):
         """Plots the lattice.
 
         Args:
-            p_numbers: print plaquette indices.
-            v_numbers: print vertex indices.
-            e_numbers: print edge indices.
+            p_numbers (bool): print plaquette indices.
+            v_numbers (bool): print vertex indices.
+            e_numbers (bool): print edge indices.
+            axis (bool): show axis.
         """
         plt.figure()
-        plt.axis('off')
+        if not axis:
+            plt.axis('off')
         # plt.xlabel("$x$")
         # plt.ylabel("$y$")
         if v_numbers:

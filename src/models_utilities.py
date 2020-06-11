@@ -356,7 +356,7 @@ class EarlyStopping(Callback):
             self.wait += 1
             if self.wait >= self.patience:
                 self.model.stop_training = True
-                print(f'\nEarly stopping: val_acc did not improve. '\
+                print(f'\nEarly stopping: {self.monitor} did not improve. '\
                 f'Before: {self.best:.4f}, afer: {current:.4f}, '\
                 f'diff = {current-self.best:.4f}.\n')
 
