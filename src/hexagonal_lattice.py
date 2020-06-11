@@ -169,14 +169,14 @@ def _direct_distance(N_col, N_row, v1_orientation, p1, p2):
     conditions in the lattice.
     
     Args:
-        N_col: integer.
-        N_row: integer.
-        v1_orientation: integer, orientation of first vertex (0 or 1).
+        N_col (int).
+        N_row (int).
+        v1_orientation (int): orientation of first vertex (0 or 1).
         p1 (1d array int): position of first vertex.
         p2 (1d array int): position of second vertex.
 
     Returns:
-        d: integer, distance.
+        d (int): distance.
         e_path (1d array int): edges in the path.
     """
     p_new = p1.copy()
@@ -222,13 +222,13 @@ def _reciprocal_distance(N_col, N_row, p1, p2):
     in reciprocal lattice.
 
     Args:
-        N_col: integer.
-        N_row: integer.
+        N_col (int).
+        N_row (int).
         p1 (1d array int): position of first plaquette.
         p2 (1d array int): position of second plaquette.
 
     Returns:
-        d: integer, distance.
+        d (int): distance.
         e_path (1d array int): edges in the path.
     """
     p_new = p1.copy()
@@ -265,13 +265,13 @@ def _PBC_position(N_col, N_row, p1, p2):
     to compute distances between p1 and p2.
 
     Args:
-        N_col: integer.
-        N_row: integer.
+        N_col (int).
+        N_row (int).
         p1 (1d array int): position in the lattice.
         p2 (1d array int): position in the lattice.
 
     Returns:
-        p2_PBC: 2d array (int) with shape (4, 2), the four different
+        p2_PBC (2d array int): with shape (4, 2), the four different
             periodic positions of p1.
     """
     v_0 = np.array([2*N_col, 0])
@@ -304,13 +304,13 @@ class HexagonalLattice:
     conditions, i.e., it's embedded on a torus.
 
     Attributes:
-        N_row: integer, number of hexagon rows.
-        N_col: integer, number of hexagon columns.
-        N_edge: integer, total number of edges.
-        N_vertex: integer, total number of vertices.
-        N_plaquette: integer, total number of plaquettes.
+        N_row (int): number of hexagon rows.
+        N_col (int): number of hexagon columns.
+        N_edge (int): total number of edges.
+        N_vertex (int): total number of vertices.
+        N_plaquette (int): total number of plaquettes.
         p_position (2d array int): contains position of each plaquette.
-        v_position:  2d array (int), contains position of each vertex.
+        v_position (2d array int): contains position of each vertex.
         v_orientation (1d array int): contains orientation of each vertex.
         v_plaquette (2d array int): plaquettes connected to each vertex.
         e_vertex (2d array int): vertices connected to each edge.
@@ -327,8 +327,8 @@ class HexagonalLattice:
         """"Creates a HexagonalLattice object.
 
         Args:
-            N_row: integer, number of hexagon rows.
-            N_col: integer, number of hexagon columns.
+            N_row (int): number of hexagon rows.
+            N_col (int): number of hexagon columns.
         """
 
         self.N_row = N_row
@@ -361,7 +361,7 @@ class HexagonalLattice:
         """Construct vertex data.
 
         Returns:
-            v_position:  2d array (int), contains position of each vertex.
+            v_position (2d array int): contains position of each vertex.
             v_orientation (1d array int): contains orientation of each vertex.
         """
         N_vertex = self.N_row*self.N_col*2
@@ -415,7 +415,7 @@ class HexagonalLattice:
         """Computes the plaquettes associated to each vertex.
 
         Returns:
-            2d array (int), plaquettes connected to each vertex.
+            (2d array int): plaquettes connected to each vertex.
         """
         v_plaquette = np.zeros([self.N_vertex, 3], dtype=int)
         for k in range(self.N_vertex):
@@ -439,7 +439,7 @@ class HexagonalLattice:
         associated to vertices.
         
         Args:
-            vertex (integer or 1d array int): input vertices.
+            vertex (int or 1d array int): input vertices.
             both (bool): if true, returned edges are only those where both
                 vertices are contained in vertex list.
 
@@ -482,10 +482,10 @@ class HexagonalLattice:
         """Given a list of plaquettes, return belonging edges.
         
         Args:
-            plaquette: integer or 1d array (int) of plaquettes.
+            plaquette (int): or 1d array (int) of plaquettes.
 
         Returns:
-            p_edge: 2d array (int) of shape (len(plaquette), 6).
+            p_edge (2d array int): shape (len(plaquette), 6).
         """
         p_vertex = self.plaquette2vertex(plaquette)
         p_edge = np.zeros(p_vertex.shape, dtype=int)
@@ -566,14 +566,15 @@ class HexagonalLattice:
         periodic equivalents of p2. Return the minimum of these distances.
         
         Args:
-            p1: integer if plaquette index, 1d array (int) if plaquette
+            p1 (int): if plaquette index, 1d array (int) if plaquette
             position. First vertex.
-            p2: integer if plaquette index, 1d array (int) if plaquette
+            p2 (int): if plaquette index, 1d array (int) if plaquette
             position. Second vertex.
-            PBC: whether to take into account periodic boundary conditions.
+            PBC (bool): whether to take into account periodic boundary 
+            conditions.
 
         Returns:
-            distance: integer.
+            distance (int).
             path (1d array int): edges.
         """
         if np.size(p1) == 1:  # if input is index of plaquette
@@ -602,16 +603,17 @@ class HexagonalLattice:
         Analogous to reciprocal_distance
         
         Args:
-            p1: integer if vertex index, 1d array (int) if vertex position. 
+            p1 (int): if vertex index, 1d array (int) if vertex position. 
                 First vertex.
-            p2: integer if vertex index, 1d array (int) if vertex position. 
+            p2 (int): if vertex index, 1d array (int) if vertex position. 
                 Second vertex.
-            v1_orientation: integer, orientation of first vertex. Optional,
+            v1_orientation (int):, orientation of first vertex. Optional,
                 not necessary if p1 and p2 are given as index.
-            PBC: whether to take into account periodic boundary conditions.
+            PBC (bool): whether to take into account periodic boundary
+                conditions.
 
         Returns:
-            distance: integer.
+            distance (int):.
             path (1d array int): edges.
         """
         if np.size(p1) == 1:  # if vertex index given as input
@@ -642,11 +644,11 @@ class HexagonalLattice:
         system in direction given by axis.
         
         Args:
-            direct: bool, direct or reciprocal.
-            axis: integer, 0 horizontal, 1 vertical.
+            direct (bool): direct or reciprocal.
+            axis (int): 0 horizontal, 1 vertical.
             
         Returns:
-            line (1d array int):.
+            line (1d array int).
         """
         if direct and axis == 0:
             line = np.arange(self.N_col*2)
@@ -664,7 +666,7 @@ class HexagonalLattice:
         """Plots edge of the lattice. 
         
         Args:
-            edge: integer, index corresponding to the edge.
+            edge (int): index corresponding to the edge.
         """
         pos = np.squeeze(self.edge_position(edge))
         if self.e_orientation[edge] == 0:
@@ -891,104 +893,3 @@ class HexagonalLattice:
     #         assert i < self.N_col, 'String goes all around system.'
     #     # print(i)
     #     return position
-
-###############################################################################
-# %matplotlib qt5
-# l = HexagonalLattice(5,5)
-# l.plot_lattice(e_numbers=True)
-
-###############################################################################
-# # Check numba vertex2edge
-# l = HexagonalLattice(7,7)
-# vertex = np.array([3,16,5,55])
-# l._vertex2edge(l.N_col, l.N_row, l.v_position, l.v_orientation, vertex)
-# l.vertex2edge(vertex, both=False)
-
-###############################################################################
-# # Check numba edge position
-# l.edge_position(np.array([1,2,45]))
-# l._edge_position(l.N_col, l.N_vertex, np.array([1,2,45]))
-
-###############################################################################
-# # Check direct shortest path and numba version agree.
-# l = HexagonalLattice(7,7)
-# PBC = True
-# for i in range(1000):
-#     # np.random.seed(1)
-#     p1 = np.squeeze(np.random.choice(l.N_vertex, 1))
-#     p2 = np.squeeze(np.random.choice(l.N_vertex, 1))
-#     path1 = l.direct_shortest_path(p1, p2, PBC=PBC)
-#     path2 = l.numba_direct_shortest_path(p1, p2, PBC=PBC)
-#     path1
-#     if np.all(path1==path2): continue
-#     else:
-#         print('failed')
-#         break
-# print(i)
-# print(path1)
-# print(path2)
-
-###############################################################################
-# # Check reciprocal shortest path and numba version agree.
-# l = HexagonalLattice(7,7)
-# PBC = True
-# for i in range(1000):
-#     # np.random.seed(1)
-#     p1 = np.squeeze(np.random.choice(l.N_plaquette, 1))
-#     p2 = np.squeeze(np.random.choice(l.N_plaquette, 1))
-#     path1 = l.reciprocal_shortest_path(p1, p2, PBC=PBC)
-#     path2 = l.numba_reciprocal_shortest_path(p1, p2, PBC=PBC)
-#     if np.all(path1==path2): continue
-#     else:
-#         print('failed')
-#         break
-# print(i)
-# print(path1)
-# print(path2)
-
-###############################################################################
-# # Check move away boudary numba versions
-# from error_model import group_edges
-# l = HexagonalLattice(7,7)
-#
-# for i in range(1000):
-#     error = (np.random.choice(2, l.N_edge, p=[.8,.2])).astype(bool)
-#     X_error_group = group_edges(error, l)
-#     pattern = X_error_group[np.argmax([np.size(e) for e in X_error_group])]
-#     position = l.edge_position(pattern)
-#     try:
-#         a = l.move_away_boundary_e(l.N_row, l.N_col, position)
-#     except Exception as error:
-#         a = error
-#     try:
-#         b = l.move_away_boundary(position, typ='e')
-#     except Exception as error:
-#         b = error
-#     if not np.all(a==b):
-#         print('failed')
-#         break
-
-###############################################################################
-# # Check e_position2edge
-# l = HexagonalLattice(7,7)
-# edge = np.random.choice(l.N_edge, 5)
-# print(edge)
-# e_position = l.edge_position(edge)
-# print(e_position)
-# a = _e_position2edge(l.N_col, l.N_vertex, e_position)
-# b = l.e_position2edge(e_position)
-# print(a)
-# print(b)
-
-    # def coord_change(self, position):
-    #     """Coordinate change from orthogonal coord to non-orthogoanl coordinates."""
-    #     pos_new = np.zeros(position.shape)
-    #     pos_new[...,0] = position[...,0] - position[...,1]/self.m
-    #     pos_new[...,1] = position[...,1]*np.sqrt(1+1/self.m**2)
-    #     return pos_new
-    #
-    # def inverse_coord_change(self, position):
-    #     pos_new = np.zeros(position.shape)
-    #     pos_new[...,0] = position[...,0] + position[...,1]/(self.m*np.sqrt(1+self.m**2))
-    #     pos_new[...,1] = position[...,1]/np.sqrt(1+1/self.m**2)
-    #     return pos_new
