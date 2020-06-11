@@ -213,12 +213,12 @@ def plaquette_probabilities(mapping, alpha_plaquette, e_orientation):
     return prob_dist, c, c_class
 
 
-def map_length_one_string(X_string, lattice):
+def map_length_one_string(x_string, lattice):
     """Given string edges, returns mapping to each length-one string, where
     positions in map are in small 5-qubit system and numbers are in old big
     system. Following the labeling given in Fig. 7. """
-    mapping = np.zeros([len(X_string), 5], dtype=int)
-    for i, e in enumerate(X_string):
+    mapping = np.zeros([len(x_string), 5], dtype=int)
+    for i, e in enumerate(x_string):
         mapping[i, 2] = e
         position = np.squeeze(lattice.edge_position(e))
 
@@ -273,20 +273,20 @@ def map_length_one_string(X_string, lattice):
 
 
 @njit
-def move_string(N_row, N_col, X_string_pos):
-    """Move string given by edge positions X_string_pos to the lower left
+def move_string(N_row, N_col, x_string_pos):
+    """Move string given by edge positions x_string_pos to the lower left
     corner of a lattice with N_row and N_col.
     """
     while True:
-        if np.all(_mod(N_row, N_col, X_string_pos - np.array([1, 3], 
-            np.float64)) == X_string_pos - np.array([1, 3], np.float64)):
-            X_string_pos = X_string_pos - np.array([1, 3], np.float64)
-        elif np.all(_mod(N_row, N_col, X_string_pos - np.array([2, 0], 
-            np.float64)) == X_string_pos - np.array([2, 0], np.float64)):
-            X_string_pos = X_string_pos - np.array([2, 0], np.float64)
+        if np.all(_mod(N_row, N_col, x_string_pos - np.array([1, 3], 
+            np.float64)) == x_string_pos - np.array([1, 3], np.float64)):
+            x_string_pos = x_string_pos - np.array([1, 3], np.float64)
+        elif np.all(_mod(N_row, N_col, x_string_pos - np.array([2, 0], 
+            np.float64)) == x_string_pos - np.array([2, 0], np.float64)):
+            x_string_pos = x_string_pos - np.array([2, 0], np.float64)
         else:
             break
-    return X_string_pos
+    return x_string_pos
 
 
 @njit('float64[:,:](int64, int64, float64[:,:])')
@@ -435,48 +435,48 @@ def group_edges(edge, lattice, direct=True):
     return edge_group_list
 
 
-def X_error_pattern(X_string, 
+def x_error_pattern(x_string, 
                     lattice, 
                     lattice_map=HexagonalLattice(6, 6), 
                     plot=False):
-    """Given a set of connected edges, X_string, identify it uniquely with a 
+    """Given a set of connected edges, x_string, identify it uniquely with a 
     pattern.
     
-    A pattern is the set of edge indices where X_string lives when mapped into
+    A pattern is the set of edge indices where x_string lives when mapped into
     the lower left corner of lattice_map.
 
     Args:
-        X_string (1d array int): adjacent edge indices.
-        lattice (lattice object): original lattice where X_string is found.
-        lattice_map (lattice object): where X_string is mapped.
-        plot (bool): whether to plot X_string in the new and the original 
+        x_string (1d array int): adjacent edge indices.
+        lattice (lattice object): original lattice where x_string is found.
+        lattice_map (lattice object): where x_string is mapped.
+        plot (bool): whether to plot x_string in the new and the original 
             lattice.
     Returns:
-        pattern (1d array int): edge indices where X_string is located in
+        pattern (1d array int): edge indices where x_string is located in
             lattice_map.
     """
 
-    X_string_pos = lattice.edge_position(X_string)
-    X_string_pos = move_away_boundary_e(
-        lattice.N_row, lattice.N_col, X_string_pos)
+    x_string_pos = lattice.edge_position(x_string)
+    x_string_pos = move_away_boundary_e(
+        lattice.N_row, lattice.N_col, x_string_pos)
 
     # Determine if string goes through a boundary and move it out of boundary
-    X_string_pos = move_away_boundary_e(
-        lattice_map.N_row, lattice_map.N_col, X_string_pos)
+    x_string_pos = move_away_boundary_e(
+        lattice_map.N_row, lattice_map.N_col, x_string_pos)
     # Move string to lower left corner
-    X_string_pos = move_string(
-        lattice_map.N_row, lattice_map.N_col, X_string_pos)
+    x_string_pos = move_string(
+        lattice_map.N_row, lattice_map.N_col, x_string_pos)
     # Mapped to vertices in small system
-    pattern = np.sort(lattice_map.e_position2edge(X_string_pos))
+    pattern = np.sort(lattice_map.e_position2edge(x_string_pos))
 
     # Plot results
     if plot:
         lattice_map.plot_lattice(e_numbers=True)
         lattice_map.plot_error(pattern)
         lattice.plot_lattice(e_numbers=True)
-        X_error = np.zeros(lattice.N_edge, dtype=bool)
-        X_error[X_string] = True
-        lattice.plot_error(X_error)
+        x_error = np.zeros(lattice.N_edge, dtype=bool)
+        x_error[x_string] = True
+        lattice.plot_error(x_error)
 
     return pattern
 
@@ -554,13 +554,13 @@ def compute_all_patterns(max_length=14):
     for _ in range(int(1e6)):
         p_X = 0.2
         lattice = HexagonalLattice(6,6)
-        X_error = np.random.choice(2, lattice.N_edge, p=[1-p_X, p_X])
-        X_error = X_error.astype(bool)
-        X_error_group = group_edges(X_error, lattice, direct=True)
-        for X_string in X_error_group:
+        x_error = np.random.choice(2, lattice.N_edge, p=[1-p_X, p_X])
+        x_error = x_error.astype(bool)
+        x_error_group = group_edges(x_error, lattice, direct=True)
+        for x_string in x_error_group:
             try:
-                pattern = X_error_pattern(
-                    X_string, lattice, HexagonalLattice(6, 6))
+                pattern = x_error_pattern(
+                    x_string, lattice, HexagonalLattice(6, 6))
             except Exception as error:
                 print("Pattern error "+repr(error))
                 continue

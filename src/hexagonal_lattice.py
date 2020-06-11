@@ -731,7 +731,7 @@ class HexagonalLattice:
         plt.scatter(self.v_position[v_syndrome, 0]*.5*self.w, self.v_position[v_syndrome, 1]
                     * .25*self.h, 14, marker='o', color='r', zorder=5)
 
-    def plot_error(self, X_error, Z_error=[]):
+    def plot_error(self, x_error, Z_error=[]):
         """Given X and Z errors, plot them in the lattice with different 
         colors.
 
@@ -741,20 +741,20 @@ class HexagonalLattice:
         Z error -> green
 
         Args:
-            X_error (1d array int): list of edges where X occurred.
+            x_error (1d array int): list of edges where X occurred.
             Z_error (1d array int): optional, list of edges where Z occurred.
         """
-        if len(X_error) == self.N_edge or len(Z_error) == self.N_edge:
-            X = X_error
+        if len(x_error) == self.N_edge or len(Z_error) == self.N_edge:
+            X = x_error
             Z = Z_error
-            if len(X_error) == 0:
+            if len(x_error) == 0:
                 X = np.zeros(self.N_edge, dtype=bool)
             if len(Z_error) == 0:
                 Z = np.zeros(self.N_edge, dtype=bool)
         else:
             X = np.zeros(self.N_edge, dtype=bool)
             Z = np.zeros(self.N_edge, dtype=bool)
-            X[X_error] = True
+            X[x_error] = True
             Z[Z_error] = True
         for i in range(self.N_edge):
             if not (X[i] or Z[i]):
@@ -766,130 +766,3 @@ class HexagonalLattice:
             elif Z[i]:
                 color = 'lime'
             self.plot_edge(i, color=color)
-
-
-    # def v_position2vertex(self, v_position):
-    #     """Given vertex positions, obtain vertex indices.
-        
-    #     Args:
-    #         v_position: 2d array (int) of vertex positions.
-
-    #     Returns:
-    #         vertex (1d array int): of vertex indices.
-    #     """
-    #     N_vertex = np.shape(v_position)[0]
-    #     vertex = np.zeros(N_vertex, dtype=int)
-    #     for i in range(N_vertex):
-    #         vertex[i] = v_position[i, 0] - v_position[i, 1]//3 + \
-    #             (v_position[i, 1]//3)*2*self.N_col
-    #     return vertex
-
-    # def edge2plaquette(self, edge):
-    #     """Given edge list, obtain plaquette indices of the two plaquettes
-    #     containing each edge.
-        
-    #     Args:
-    #         edge: integer or 1d array (int) of edge indices.
-
-    #     Returns:
-    #         plaquette: 2d array (int) of shape (len(edge), 2) with plaquette 
-    #             indices for each edge.
-    #     """
-    #     edge = np.atleast_1d(edge)
-    #     plaquette = np.zeros((np.size(edge), 2), dtype=int)
-    #     for i, e in enumerate(edge):
-    #         plaquette[i, :] = np.intersect1d(
-    #             self.v_plaquette[self.e_vertex[e][0]], self.v_plaquette[self.e_vertex[e][1]])
-    #     return plaquette
-
-    # def plaquette2plaquette(self, plaquette):
-    #     """Given a list of plaquettes, return the 6 plaquettes neighbouring 
-    #     each given plaquette.
-        
-    #     Args:
-    #         plaquette: integer or 1d array (int) of plaquettes.
-            
-    #     Returns:
-    #         2d array (int) with shape (len(edge), 2)."""
-    #     plaquette = np.atleast_1d(plaquette)
-    #     p_plaquette = np.zeros((np.size(plaquette), 6), dtype=int)
-    #     shift = np.array([[2, 0], [-2, 0], [1, 3], [-1, 3], [-1, -3], [1, -3]])
-    #     for i, p in enumerate(plaquette):
-    #         p_position = np.tile(self.p_position[p], (6, 1))
-    #         p_position = p_position + shift
-    #         p_position = self.mod_(p_position)
-    #         p_plaquette[i, :] = self.p_position2plaquette(p_position)
-    #     return p_plaquette
-
-    # def vertex2vertex(self, vertex):
-    #     """Given a list of vertices, return the 3 vertices neighbouring each
-    #     given vertex.
-        
-    #     Args:
-    #         vertex: integer or 1d array (int) of vertices.
-            
-    #     Returns:
-    #         2d array (int) with shape (len(vertex), 2)"""
-    #     vertex = np.atleast_1d(vertex)
-    #     v_vertex = np.zeros((np.size(vertex), 3), dtype=int)
-    #     shift_0 = np.array([[1, -1], [0, 2], [-1, -1]])
-    #     shift_1 = np.array([[1, 1], [0, -2], [-1, 1]])
-    #     mod = np.tile([self.N_col*2, self.N_row*3], (3, 1))
-    #     for i, v in enumerate(vertex):
-    #         v_position = np.tile(self.v_position[v], (3, 1))
-    #         if self.v_orientation[v] == 0:
-    #             v_position = v_position + shift_0
-    #         else:
-    #             v_position = v_position + shift_1
-    #         v_position = self.mod_(v_position)
-    #         v_vertex[i, :] = self.v_position2vertex(v_position)
-    #     return v_vertex
-
-
-    # def move_away_boundary(position, typ='v'):
-    #     """Determine if positions of groups of vertices, plaquettes or edges
-    #     go through a boundary and move it away."""
-    #     position = np.atleast_2d(position)
-    #     if typ == 'v':
-    #         YMIN = 0
-    #         YMAX = self.N_row*3-2
-    #         def XMIN(x): return 3*x
-    #         def XMAX(x): return 3*(x-2*self.N_col+1) + 1
-    #     elif typ == 'p':
-    #         YMIN = 2
-    #         YMAX = self.N_row*3-1
-    #         def XMIN(x): return 3*x - 4
-    #         def XMAX(x): return 3*(x-2*self.N_col+2) - 4
-    #     elif typ == 'e':
-    #         YMIN = 0.5
-    #         YMAX = self.N_row*3-1
-    #         def XMIN(x): return 3*x - 1
-    #         def XMAX(x): return 3*(x-2*self.N_col+1) - 1
-    #     # x_max = np.min(np.abs([XMAX(p[0])-p[1] for p in position]))
-    #     # x_min = np.min(np.abs([XMIN(p[0])-p[1] for p in position]))
-    #     y_max = np.max(position[:, 1])
-    #     y_min = np.min(position[:, 1])
-    #     s = 1
-    #     i = 1
-    #     # print(str(y_min)+' '+str(y_max))
-    #     while y_min == YMIN and y_max == YMAX:
-    #         position = self.mod(position + [s*1, 3])
-    #         s = -s
-    #         y_min = np.min(position[:, 1])
-    #         y_max = np.max(position[:, 1])
-    #         i = i + 1
-    #         assert i < self.N_row, 'String goes all around system.'
-    #     # print(i)
-    #     i = 1
-    #     x_max = np.min(np.abs([XMAX(p[0])-p[1] for p in position]))
-    #     x_min = np.min(np.abs([XMIN(p[0])-p[1] for p in position]))
-    #     # print(str(x_min)+' '+str(x_max))
-    #     while x_min == 0 and x_max == 0:
-    #         position = self.mod(position + [2, 0])
-    #         # print(position)
-    #         x_min = np.min(np.abs([XMIN(p[0])-p[1] for p in position]))
-    #         x_max = np.min(np.abs([XMAX(p[0])-p[1] for p in position]))
-    #         i = i + 1
-    #         assert i < self.N_col, 'String goes all around system.'
-    #     # print(i)
-    #     return position

@@ -132,7 +132,7 @@ class Decoder:
         return e_result_0, e_result_1
 
 
-def decoder_dumb_fun(v_syn_ind, p_syn_ind, lattice):
+def decoder_simple_fun(v_syn_ind, p_syn_ind, lattice):
     """Decoder taking all excitations to plaquette and vertex 0.
     """
     # Decode vertex syndrome
@@ -148,4 +148,4 @@ def decoder_dumb_fun(v_syn_ind, p_syn_ind, lattice):
     return X_recover, Z_recover
 
 
-decoder_dumb = Decoder(decoder_dumb_fun)
+decoder_simple = Decoder(decoder_simple_fun)

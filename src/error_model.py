@@ -10,7 +10,7 @@ import compute_pattern as cp
 from hexagonal_lattice import HexagonalLattice
 
 
-def plaquette_measurement(X_string, lattice):
+def plaquette_measurement(x_string, lattice):
     """Given a string of X errors, returns the possible plaquette excitations
     obtained when plaquettes are measured, with the probability distribution
     associated with them. 
@@ -20,8 +20,8 @@ def plaquette_measurement(X_string, lattice):
      are non-zero).
     
     Args:
-        X_string (1d array int): adjacent edge indices.
-        lattice (lattice object): lattice where X_string lives.
+        x_string (1d array int): adjacent edge indices.
+        lattice (lattice object): lattice where x_string lives.
     
     Returns:
         prob_dist (1d array float): probability of each of the plaquette 
@@ -32,11 +32,11 @@ def plaquette_measurement(X_string, lattice):
             2**(len(edge)).
         edge (1d array int): edges involved.
     """
-    pattern = cp.X_error_pattern(X_string, lattice)
+    pattern = cp.x_error_pattern(x_string, lattice)
     # Label edges and plaquettes in conn path from left to right and bottom to
     # top. If group of plaquettes/edges goes through a border, the ordering 
     # will not work, thus we use move_away_boundary
-    vertex = np.unique(lattice.e_vertex[X_string])
+    vertex = np.unique(lattice.e_vertex[x_string])
 
     plaquette = np.unique(lattice.v_plaquette[vertex])
     p_position = cp.move_away_boundary_p(
@@ -65,15 +65,15 @@ def plaquette_measurement(X_string, lattice):
     return prob_dist, plaquette, c_class, edge
 
 
-def get_X_p_syndrome(X_string, lattice, one_string=True, KTC=False):
+def get_X_p_syndrome(x_string, lattice, one_string=True, KTC=False):
     """Computes plaquette syndrome coming from a string of X operators. 
     
-    Edges in X_string must be contiguous. Syndrome is measured and one of the
+    Edges in x_string must be contiguous. Syndrome is measured and one of the
     possible plaquette excitation pattern is chosen with np.random.choice. 
     Returns just one P_z if one_string is True.
     
     Args:
-        X_string (1d array int): adjacent edge indices.
+        x_string (1d array int): adjacent edge indices.
         lattice (lattice object).
         one_string (bool): optional, return just one of the equivalent Z's.
         KTC (bool): optional, Kitaev toric code instead of semion code.
@@ -92,7 +92,7 @@ def get_X_p_syndrome(X_string, lattice, one_string=True, KTC=False):
 
     # Semion code
     prob_dist, plaquette, c_class, edge = plaquette_measurement(
-        X_string, lattice)
+        x_string, lattice)
     case = np.random.choice(len(prob_dist), 1, p=prob_dist)
     p_syndrome_list = cp.de2bi(np.arange(2**len(plaquette)), len(plaquette))
     p_index = np.argwhere(np.squeeze(p_syndrome_list[case,:]))
@@ -135,11 +135,11 @@ def get_Z_p_syndrome(Z_error, lattice):
     return p_syndrome, np.squeeze(np.argwhere(Z_error))
 
 
-def get_v_syndrome(X_error, lattice):
+def get_v_syndrome(x_error, lattice):
     """Returns vertex syndrome coming from X errors.
     
     Args:
-        X_error (1d array bool): with length lattice.N_edge. True if an X error
+        x_error (1d array bool): with length lattice.N_edge. True if an X error
             occurred at that edge.
         lattice (lattice object).
 
@@ -150,9 +150,9 @@ def get_v_syndrome(X_error, lattice):
     """
     v_syndrome = np.zeros(lattice.N_vertex, dtype=bool)
     for i in range(lattice.N_edge):
-        if X_error[i]:
+        if x_error[i]:
             v_syndrome[lattice.e_vertex[i]] = np.logical_not(v_syndrome[lattice.e_vertex[i]])
-    return v_syndrome, np.squeeze(np.argwhere(X_error))
+    return v_syndrome, np.squeeze(np.argwhere(x_error))
 
 
 def uncompress_Z_edge(Z_edge_compressed, one_string=True):
@@ -185,7 +185,7 @@ def uncompress_Z_edge(Z_edge_compressed, one_string=True):
     return Z_edge
 
 
-def XYZ_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
+def xyz_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
               one_string=True):
     """Introduce random X-, Y- and Z-Pauli errors in a lattice, measure and 
     return syndrome.
@@ -218,11 +218,11 @@ def XYZ_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
 
     error = np.random.choice(4, lattice.N_edge, p=[
                              1-p_X-p_Y-p_Z, p_X, p_Y, p_Z])
-    X_error = (error==1)
+    x_error = (error==1)
     Y_error = (error==2)
     Z_error = (error==3)
     # Decompose Y_error into X and Z error
-    X_error = np.logical_xor(X_error, Y_error)
+    x_error = np.logical_xor(x_error, Y_error)
     Z_error = np.logical_xor(Z_error, Y_error)
 
     # Z-error plaquette syndrome
@@ -232,12 +232,12 @@ def XYZ_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
     else:
         Z_edge = [np.array([], dtype=int)]
     # X-error vertex syndrome
-    v_syndrome, X_edge = get_v_syndrome(X_error, lattice)
+    v_syndrome, X_edge = get_v_syndrome(x_error, lattice)
     X_edge = [X_edge]
     # X-error plaquette syndrome
-    X_error_group = cp.group_edges(X_error, lattice)
-    for X_string in X_error_group:
-        synd, P_z = get_X_p_syndrome(X_string, lattice, one_string, KTC)
+    x_error_group = cp.group_edges(x_error, lattice)
+    for x_string in x_error_group:
+        synd, P_z = get_X_p_syndrome(x_string, lattice, one_string, KTC)
         p_syndrome = np.logical_xor(synd, p_syndrome)
         if len(P_z)>0:
             Z_edge.append(P_z)
@@ -250,8 +250,6 @@ def XYZ_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
     if plot:
         lattice.plot_lattice(e_numbers=True)
         lattice.plot_syndrome(p_syndrome, v_syndrome)
-        lattice.plot_error(X_error, Z_error)
-        from matplotlib import pyplot as plt
-        plt.savefig('XYZ_noise.pdf')
+        lattice.plot_error(x_error, Z_error)
 
     return X_edge, Z_edge, v_syn_ind, p_syn_ind
