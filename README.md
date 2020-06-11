@@ -9,7 +9,7 @@ A decoder for the semion code based on neural networks. The semion code is embed
   <img src="hexagonal_lattice_4.png" width="500">
 </p>
 
-The neural networks are trained to predict which logical error was produced by a simple decoder. Therefore the decoding process is turned into a classification task with 16 categories. Given the error syndrome, i.e., the 0 or 1 state of each vertex and plaquette in the lattice, the model has to predict the category.
+The neural networks are trained to predict which logical error was produced by a simple decoder. Therefore the decoding process is turned into a classification task with 16 categories. Given the error syndrome, i.e., the 0 or 1 state of each vertex and plaquette in the lattice, the model has to predict the logical error.
 
 ## How to train a model
 
@@ -17,7 +17,7 @@ The neural networks are trained to predict which logical error was produced by a
 2. Generate training data for the desired error rate and noise type.
 3. Define the neural network and train.
 
-These steps are shown in notebook training.ipynb. <!-- A more detailed explanation of the data format and data generation is given in data.ipynb.-->
+These steps are shown in notebook training.ipynb. A more detailed explanation of the data format and data generation is given in data.ipynb.
 The code was run with Python 3.6 and TensorFlow 1.14.
 
 ## References
