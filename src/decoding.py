@@ -55,12 +55,12 @@ class Decoder:
         """
         return self._decode_fun(v_syn_ind, p_syn_ind, lattice)
 
-    def decode_result(self, X_edge, Z_edge, v_syn_ind, p_syn_ind, lattice):
+    def decode_result(self, x_edge, z_edge, v_syn_ind, p_syn_ind, lattice):
         """Logical errors as a consequence of applying recovery operators.
 
         Args:
-            X_edge (1d array int): edges where X (S^+) error occurred.
-            Z_edge (1d array int): edges where Z error occurred.
+            x_edge (1d array int): edges where X (S^+) error occurred.
+            z_edge (1d array int): edges where Z error occurred.
             v_syn_ind (1d array int): excited vertex indices.
             p_syn_ind (1d array int): excited plaquette indices.
             lattice (lattice object): the code lattice.
@@ -75,8 +75,8 @@ class Decoder:
         X_recover, Z_recover = self._decode_fun(v_syn_ind,
                                                 p_syn_ind,
                                                 lattice)
-        X_total = self._operation_total(X_edge, X_recover)
-        Z_total = self._operation_total(Z_edge, Z_recover)
+        X_total = self._operation_total(x_edge, X_recover)
+        Z_total = self._operation_total(z_edge, Z_recover)
 
         X_result_0, X_result_1 = self._winding_result(
             X_total, lattice, direct=True)
@@ -85,11 +85,11 @@ class Decoder:
 
         return X_result_0, Z_result_0, X_result_1, Z_result_1
 
-    def decode_succesful(self, X_edge, Z_edge, v_syn_ind, p_syn_ind, lattice):
+    def decode_succesful(self, x_edge, z_edge, v_syn_ind, p_syn_ind, lattice):
         """If no logical error occurred after recovery, returns True.
         """
         X_result_0, X_result_1, Z_result_0, Z_result_1 = self.decode_result(
-            X_edge, Z_edge, v_syn_ind, p_syn_ind, lattice)
+            x_edge, z_edge, v_syn_ind, p_syn_ind, lattice)
         X_result = np.logical_or(X_result_0, X_result_1)
         Z_result = np.logical_or(Z_result_0, Z_result_1)
         return not np.logical_or(X_result, Z_result)
@@ -139,12 +139,12 @@ def decoder_simple_fun(v_syn_ind, p_syn_ind, lattice):
     X_recover = np.array([], dtype=int)
     for s in v_syn_ind:
         X_recover = np.append(
-            X_recover, lattice.direct_distance(0, s, PBC=False)[1])
+            X_recover, lattice.direct_distance(0, s, pbc=False)[1])
     # Decode plaquette syndrome
     Z_recover = np.array([], dtype=int)
     for s in p_syn_ind:
         Z_recover = np.append(
-            Z_recover, lattice.reciprocal_distance(0, s, PBC=False)[1])
+            Z_recover, lattice.reciprocal_distance(0, s, pbc=False)[1])
     return X_recover, Z_recover
 
 

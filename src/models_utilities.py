@@ -19,8 +19,8 @@ def data2image(data, lattice_shape, width=0):
     """Receives 1d syndrome data and returns a 2d array with the syndromes
     distributed according to Table II of arXiv:2002.08666.
     """
-    N_vertex = 2*lattice_shape[0]*lattice_shape[1]
-    N_plaquette = lattice_shape[0]*lattice_shape[1]
+    n_vertex = 2*lattice_shape[0]*lattice_shape[1]
+    n_plaquette = lattice_shape[0]*lattice_shape[1]
 
     data_image = np.zeros((len(data[1]), lattice_shape[0]*2+2*width,
                            lattice_shape[1]*2+2*width, np.int64(1)), 
@@ -33,16 +33,16 @@ def data2image(data, lattice_shape, width=0):
         central_image = np.zeros(
             (lattice_shape[0]*2,  lattice_shape[1]*2), dtype=np.bool_)
         # inputs has first vertices then plaquettes
-        for i in range(N_vertex):
+        for i in range(n_vertex):
             row = i//(lattice_shape[1]*2)
             col = i - lattice_shape[1]*2*row
             central_image[2*row,
                           np.mod(col+row, 2*lattice_shape[1])] = data[0][ind][i]
-        for i in range(N_plaquette):
+        for i in range(n_plaquette):
             row = i//(lattice_shape[1])
             col = i - lattice_shape[1]*2*row
             central_image[2*row+1, np.mod(2*col+row+2, 2*lattice_shape[1])] = \
-                data[0][ind][i + N_vertex]
+                data[0][ind][i + n_vertex]
 
         image = np.zeros(
             (lattice_shape[0]*2+2 * width,  lattice_shape[1]*2+2 * width), 
@@ -85,7 +85,7 @@ class DataLoader(Sequence):
         """DataLoader __init__
 
         Args:
-            lattice_shape (tuple): code shape (lattice.N_row, lattice.N_col)
+            lattice_shape (tuple): code shape (lattice.n_row, lattice.n_col)
             noise_type (str): noise type.
             batch_size (int): batch size for training.
             p_error (float): optional, load only data with this error rate.

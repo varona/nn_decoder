@@ -1,5 +1,5 @@
 """
-Builds a hexagonal lattice of size (N_row, N_col) on a torus, periodic boundary
+Builds a hexagonal lattice of size (n_row, n_col) on a torus, periodic boundary
 conditions.
 """
 
@@ -16,12 +16,12 @@ from numba import njit
 
 
 @njit
-def _mod(N_col, N_row, position):
+def _mod(n_col, n_row, position):
     """Applies _mod_1d at each row of the array position.
     
     Args:
-        N_col (int).
-        N_row (int).
+        n_col (int).
+        n_row (int).
         position (2d array of int or float): each row contains a position in 
         the lattice.
         
@@ -30,47 +30,47 @@ def _mod(N_col, N_row, position):
     """
     pos = position.copy()
     for i in range(position.shape[0]):
-        pos[i, :] = _mod_1d(N_col, N_row, position[i])
+        pos[i, :] = _mod_1d(n_col, n_row, position[i])
     return pos
 
 
 @njit
-def _mod_1d(N_col, N_row, position):
+def _mod_1d(n_col, n_row, position):
     """mod function for the hexagonal lattice.
 
     Since we have periodic boundary conditions any position (x,y) can be 
     mapped to a position in the range 
-        0 <= y - 3*x < 6*N_col
-        0 <= y < 3*N_row
+        0 <= y - 3*x < 6*n_col
+        0 <= y < 3*n_row
     
     Args:
-        N_col (int).
-        N_row (int).
+        n_col (int).
+        n_row (int).
         position (1d array of int or float).
 
     Returns:
         pos (1d array): same shape and type as position.
     """
-    v_0 = np.array([2*N_col, 0])
-    v_1 = np.array([N_row, 3*N_row])
+    v_0 = np.array([2*n_col, 0])
+    v_1 = np.array([n_row, 3*n_row])
     pos = position.copy()
     if pos[1] < 0:
         while pos[1] < 0:
             pos = pos + v_1
-    elif pos[1] > 3*N_row:
-        while pos[1] > 3*N_row:
+    elif pos[1] > 3*n_row:
+        while pos[1] > 3*n_row:
             pos = pos - v_1
     if pos[1]-3*pos[0] > 0:
         while pos[1]-3*pos[0] > 0:
             pos = pos + v_0
-    elif pos[1]-3*pos[0]+3*N_col*2 < 0:
-        while pos[1]-3*pos[0]+3*N_col*2 < 0:
+    elif pos[1]-3*pos[0]+3*n_col*2 < 0:
+        while pos[1]-3*pos[0]+3*n_col*2 < 0:
             pos = pos - v_0
     return pos
 
 
 @njit('float64[:,:](int64,int64,int64[:])')
-def _edge_position(N_col, N_vertex, edge):
+def _edge_position(n_col, n_vertex, edge):
     """Computes the position of the given edges.
     
     Args:
@@ -81,27 +81,27 @@ def _edge_position(N_col, N_vertex, edge):
     """
     e_position = np.zeros((edge.size, 2), dtype=np.float64)
     for i, e in enumerate(edge):
-        if e < N_vertex:
-            n = e//(N_col*2)
+        if e < n_vertex:
+            n = e//(n_col*2)
             e_position[i, 1] = 3*n+.5
-            m = e-n*2*N_col
+            m = e-n*2*n_col
             e_position[i, 0] = m+n+.5
-        elif e >= N_vertex:
-            k = e - N_vertex
-            n = k//N_col
+        elif e >= n_vertex:
+            k = e - n_vertex
+            n = k//n_col
             e_position[i, 1] = 3*n+2
-            m = k-n*N_col
+            m = k-n*n_col
             e_position[i, 0] = 2*m+1+n
     return e_position
 
 
 @njit('int64[:](int64, int64, int64[:,:], int64[:], int64[:])')
-def _vertex2edge(N_col, N_row, v_position, v_orientation, vertex):
+def _vertex2edge(n_col, n_row, v_position, v_orientation, vertex):
     """Given a list of vertices, returns all edges connected to vertices.
     
     Args:
-        N_col (int).
-        N_row (int).
+        n_col (int).
+        n_row (int).
         v_position (2d array int): all vertex positions (lattice.v_position).
         v_orientation (1d array int): all vertex orientations.
         vertex (1d array int): array of vertices.
@@ -121,56 +121,56 @@ def _vertex2edge(N_col, N_row, v_position, v_orientation, vertex):
             v_pos = v_pos + shift_0
         else:
             v_pos = v_pos + shift_1
-        v_pos = _mod(N_col, N_row, v_pos)
+        v_pos = _mod(n_col, n_row, v_pos)
         edge_v = np.zeros(3, dtype=np.int64)
         for j in range(3):
             if v_pos[j, 0] != np.floor(v_pos[j, 0]):  # semiinteger
                 n = (v_pos[j, 1] - .5)/3
                 m = v_pos[j, 0]-.5 - n
-                edge_v[j] = m + n*2*N_col
+                edge_v[j] = m + n*2*n_col
             else:
                 n = (v_pos[j, 1]-2)/3
                 m = (v_pos[j, 0]-1-n)/2
-                edge_v[j] = m + n*N_col + N_row*N_col*2
+                edge_v[j] = m + n*n_col + n_row*n_col*2
         edge[i*3:i*3+3] = edge_v
     return np.unique(edge)
 
 
 @njit('int64[:](int64, int64, float64[:,:])')
-def _e_position2edge(N_col, N_vertex, e_position):
+def _e_position2edge(n_col, n_vertex, e_position):
     """Given edge positions, obtain edge indices.
     
     Args:
-        N_col (int).
-        N_vertex (int).
+        n_col (int).
+        n_vertex (int).
         e_position (2d array float): position of edges with shape (?, 2).
 
     Returns:
         edge (1d array int): edge indices.
     """
-    N_edge = np.shape(e_position)[0]
-    edge = np.zeros(N_edge, dtype=np.int64)
-    for i in range(N_edge):
+    n_edge = np.shape(e_position)[0]
+    edge = np.zeros(n_edge, dtype=np.int64)
+    for i in range(n_edge):
         if e_position[i, 0] != np.floor(e_position[i, 0]):  # semiinteger
             n = (e_position[i, 1] - .5)/3
             m = e_position[i, 0]-.5 - n
-            edge[i] = np.int64(m + n*2*N_col)
+            edge[i] = np.int64(m + n*2*n_col)
         else:
             n = (e_position[i, 1]-2)/3
             m = (e_position[i, 0]-1-n)/2
-            edge[i] = np.int64(m + n*N_col + N_vertex)
+            edge[i] = np.int64(m + n*n_col + n_vertex)
     return edge
 
 
 @njit('Tuple((int64, int64[:]))(int64, int64, int64, int64[:], int64[:])')
-def _direct_distance(N_col, N_row, v1_orientation, p1, p2):
+def _direct_distance(n_col, n_row, v1_orientation, p1, p2):
     """Given two vertex positions compute distance and path between them in
     direct lattice. It does not take into account periodic boundary
     conditions in the lattice.
     
     Args:
-        N_col (int).
-        N_row (int).
+        n_col (int).
+        n_row (int).
         v1_orientation (int): orientation of first vertex (0 or 1).
         p1 (1d array int): position of first vertex.
         p2 (1d array int): position of second vertex.
@@ -208,8 +208,8 @@ def _direct_distance(N_col, N_row, v1_orientation, p1, p2):
         d = d + np.int64(1)
 
         pos = (p_new + p_old)/2.  # pos is float64
-        pos = _mod_1d(N_col, N_row, pos)
-        edge = _e_position2edge(N_col, N_row*N_col*2, np.atleast_2d(pos))
+        pos = _mod_1d(n_col, n_row, pos)
+        edge = _e_position2edge(n_col, n_row*n_col*2, np.atleast_2d(pos))
 
         e_path = np.concatenate((e_path, edge))
 
@@ -217,13 +217,13 @@ def _direct_distance(N_col, N_row, v1_orientation, p1, p2):
 
 
 @njit('Tuple((int64, int64[:]))(int64, int64, int64[:], int64[:])')
-def _reciprocal_distance(N_col, N_row, p1, p2):
+def _reciprocal_distance(n_col, n_row, p1, p2):
     """Given two plaquette positions, compute distance and path joining them
     in reciprocal lattice.
 
     Args:
-        N_col (int).
-        N_row (int).
+        n_col (int).
+        n_row (int).
         p1 (1d array int): position of first plaquette.
         p2 (1d array int): position of second plaquette.
 
@@ -249,33 +249,33 @@ def _reciprocal_distance(N_col, N_row, p1, p2):
         d = d + np.int64(1)
 
         pos = (p_new + p_old)/2.
-        pos = _mod_1d(N_col, N_row, pos)
-        edge = _e_position2edge(N_col, N_row*N_col*2, np.atleast_2d(pos))
+        pos = _mod_1d(n_col, n_row, pos)
+        edge = _e_position2edge(n_col, n_row*n_col*2, np.atleast_2d(pos))
 
         e_path = np.concatenate((e_path, edge))
     return d, e_path
 
 
 @njit('int64[:,:](int64, int64, int64[:], int64[:])')
-def _PBC_position(N_col, N_row, p1, p2):
+def _pbc_position(n_col, n_row, p1, p2):
     """Compute the four periodic positions of p2 with respect to p1.
 
     Sum lattice vectors v_0 and v_1 to p2 to obtain periodic positions. This
-    positions are equivalent to the original one: p2 == _mod(p2_PBC). Necessary
+    positions are equivalent to the original one: p2 == _mod(p2_pbc). Necessary
     to compute distances between p1 and p2.
 
     Args:
-        N_col (int).
-        N_row (int).
+        n_col (int).
+        n_row (int).
         p1 (1d array int): position in the lattice.
         p2 (1d array int): position in the lattice.
 
     Returns:
-        p2_PBC (2d array int): with shape (4, 2), the four different
+        p2_pbc (2d array int): with shape (4, 2), the four different
             periodic positions of p1.
     """
-    v_0 = np.array([2*N_col, 0])
-    v_1 = np.array([N_row, 3*N_row])
+    v_0 = np.array([2*n_col, 0])
+    v_1 = np.array([n_row, 3*n_row])
     u_1 = np.array([1, 3])/np.sqrt(1+3**2)
 
     d1 = p2 - p1
@@ -286,29 +286,29 @@ def _PBC_position(N_col, N_row, p1, p2):
     d1[0] = np.int(np.sign(d2[0]))
     d1[1] = np.int(np.sign(d2[1]))
 
-    p2_PBC = np.atleast_2d(p2)
-    p2_PBC = np.concatenate((p2_PBC, np.atleast_2d(p2-d1[0]*v_0)), axis=0)
-    p2_PBC = np.concatenate((p2_PBC, np.atleast_2d(p2-d1[1]*v_1)), axis=0)
-    p2_PBC = np.concatenate(
-        (p2_PBC, np.atleast_2d(p2-d1[1]*v_1-d1[0]*v_0)), axis=0)
+    p2_pbc = np.atleast_2d(p2)
+    p2_pbc = np.concatenate((p2_pbc, np.atleast_2d(p2-d1[0]*v_0)), axis=0)
+    p2_pbc = np.concatenate((p2_pbc, np.atleast_2d(p2-d1[1]*v_1)), axis=0)
+    p2_pbc = np.concatenate(
+        (p2_pbc, np.atleast_2d(p2-d1[1]*v_1-d1[0]*v_0)), axis=0)
 
-    return p2_PBC
+    return p2_pbc
 
 
 # # # # Hexagonal Lattice class # # # #
 
 class HexagonalLattice:
-    """A hexagonal graph formed by N_row x N_col hexagons on a torus.
+    """A hexagonal graph formed by n_row x n_col hexagons on a torus.
 
-    The lattice has N_row x N_col hexagons and has periodic boundary
+    The lattice has n_row x n_col hexagons and has periodic boundary
     conditions, i.e., it's embedded on a torus.
 
     Attributes:
-        N_row (int): number of hexagon rows.
-        N_col (int): number of hexagon columns.
-        N_edge (int): total number of edges.
-        N_vertex (int): total number of vertices.
-        N_plaquette (int): total number of plaquettes.
+        n_row (int): number of hexagon rows.
+        n_col (int): number of hexagon columns.
+        n_edge (int): total number of edges.
+        n_vertex (int): total number of vertices.
+        n_plaquette (int): total number of plaquettes.
         p_position (2d array int): contains position of each plaquette.
         v_position (2d array int): contains position of each vertex.
         v_orientation (1d array int): contains orientation of each vertex.
@@ -323,19 +323,19 @@ class HexagonalLattice:
     h = 2*size 
     w = np.sqrt(3)*size
 
-    def __init__(self, N_row, N_col):
+    def __init__(self, n_row, n_col):
         """"Creates a HexagonalLattice object.
 
         Args:
-            N_row (int): number of hexagon rows.
-            N_col (int): number of hexagon columns.
+            n_row (int): number of hexagon rows.
+            n_col (int): number of hexagon columns.
         """
 
-        self.N_row = N_row
-        self.N_col = N_col
-        self.N_edge = N_row*N_col*3
-        self.N_vertex = N_row*N_col*2
-        self.N_plaquette = N_row*N_col
+        self.n_row = n_row
+        self.n_col = n_col
+        self.n_edge = n_row*n_col*3
+        self.n_vertex = n_row*n_col*2
+        self.n_plaquette = n_row*n_col
 
         self.p_position = self.build_plaquette()
         self.v_position, self.v_orientation = self.build_vertex()
@@ -349,10 +349,10 @@ class HexagonalLattice:
             p_position (2d array int): contains position of each plaquette.
         """
         # Positions in units x,y -> w/2, h/4
-        p_position = np.zeros([self.N_plaquette, 2], dtype=int)
-        for i in range(self.N_row):  # iterate over rows
-            for j in range(self.N_col):  # iterate over columns
-                k = i*self.N_col + j
+        p_position = np.zeros([self.n_plaquette, 2], dtype=int)
+        for i in range(self.n_row):  # iterate over rows
+            for j in range(self.n_col):  # iterate over columns
+                k = i*self.n_col + j
                 p_position[k, 0] = 2 + i + 2*j
                 p_position[k, 1] = 2 + i*3
         return p_position
@@ -364,12 +364,11 @@ class HexagonalLattice:
             v_position (2d array int): contains position of each vertex.
             v_orientation (1d array int): contains orientation of each vertex.
         """
-        N_vertex = self.N_row*self.N_col*2
-        v_orientation = np.zeros([N_vertex], dtype=int)  # Y orientation 1
-        v_position = np.zeros([N_vertex, 2], dtype=int)
-        for i in range(self.N_row):  # iterate over rows
-            for j in range(2*self.N_col):  # iterate over columns
-                k = i*2*self.N_col+j
+        v_orientation = np.zeros([self.n_vertex], dtype=int)  # Y orientation 1
+        v_position = np.zeros([self.n_vertex, 2], dtype=int)
+        for i in range(self.n_row):  # iterate over rows
+            for j in range(2*self.n_col):  # iterate over columns
+                k = i*2*self.n_col+j
                 v_position[k, 0] = j + i
                 v_position[k, 1] = 1 + i*3
                 if j % 2 == 0:
@@ -387,27 +386,27 @@ class HexagonalLattice:
             e_vertex (2d array int): vertices connected to each edge.
             e_orientation (1d array int): edge orientation.
         """
-        e_vertex = np.zeros([self.N_edge, 2], dtype=int)
-        e_orientation = np.zeros([self.N_edge], dtype=int)
-        for i in range(self.N_vertex):
+        e_vertex = np.zeros([self.n_edge, 2], dtype=int)
+        e_orientation = np.zeros([self.n_edge], dtype=int)
+        for i in range(self.n_vertex):
             e_vertex[i, 0] = i
-            if np.mod(i, self.N_col*2) == 2*self.N_col-1:
-                e_vertex[i, 1] = i-2*self.N_col+1
+            if np.mod(i, self.n_col*2) == 2*self.n_col-1:
+                e_vertex[i, 1] = i-2*self.n_col+1
             else:
                 e_vertex[i, 1] = i+1
             if i % 2 == 0:
                 e_orientation[i] = 1
             else:
                 e_orientation[i] = 2
-        for i in range(self.N_vertex, self.N_edge):
-            j = i-self.N_vertex
-            n_row = j//self.N_col
-            if n_row == self.N_row-1:
+        for i in range(self.n_vertex, self.n_edge):
+            j = i-self.n_vertex
+            n_row = j//self.n_col
+            if n_row == self.n_row-1:
                 e_vertex[i, 0] = 2*j + 1
-                e_vertex[i, 1] = 2*(j-self.N_col*(self.N_row-1))
+                e_vertex[i, 1] = 2*(j-self.n_col*(self.n_row-1))
             else:
                 e_vertex[i, 0] = 2*j + 1
-                e_vertex[i, 1] = 2*j + 2*self.N_col
+                e_vertex[i, 1] = 2*j + 2*self.n_col
 
         return e_vertex, e_orientation
 
@@ -417,8 +416,8 @@ class HexagonalLattice:
         Returns:
             (2d array int): plaquettes connected to each vertex.
         """
-        v_plaquette = np.zeros([self.N_vertex, 3], dtype=int)
-        for k in range(self.N_vertex):
+        v_plaquette = np.zeros([self.n_vertex, 3], dtype=int)
+        for k in range(self.n_vertex):
             p_pos = np.zeros([3, 2], dtype=int)
             if self.v_orientation[k] == 0:
                 p_pos[0, ] = self.v_position[k, ] + np.array([1, 1])
@@ -447,11 +446,11 @@ class HexagonalLattice:
             edge (1d array np.int64): edges.
         """
         vertex = np.atleast_1d(vertex)
-        edge = _vertex2edge(self.N_col, self.N_row,
+        edge = _vertex2edge(self.n_col, self.n_row,
                             self.v_position, self.v_orientation, vertex)
 
         if both:
-            edge_both = np.zeros(self.N_edge, dtype=bool)
+            edge_both = np.zeros(self.n_edge, dtype=bool)
             for i in edge:
                 v1 = self.e_vertex[i, 0] in vertex
                 v2 = self.e_vertex[i, 1] in vertex
@@ -516,7 +515,7 @@ class HexagonalLattice:
             e_position (2d array np.float64): edge positions.
         """
         edge = np.atleast_1d(edge)
-        return _edge_position(self.N_col, self.N_vertex, edge)
+        return _edge_position(self.n_col, self.n_vertex, edge)
 
     def e_position2edge(self, e_position):
         """Given edge positions, obtain edge indices.
@@ -529,7 +528,7 @@ class HexagonalLattice:
             edge (1d array int): of edge indices.
         """
         e_position = np.atleast_2d(e_position)
-        return _e_position2edge(self.N_col, self.N_vertex, e_position)
+        return _e_position2edge(self.n_col, self.n_vertex, e_position)
 
     def p_position2plaquette(self, p_position):
         """Given plaquette positions, return plaquettes.
@@ -541,27 +540,27 @@ class HexagonalLattice:
             plaqutte (1d array int): of plaquette indices.
         """
         p_position = np.atleast_2d(p_position)
-        N_plaquette = p_position.shape[0]
-        plaquette = np.zeros(N_plaquette, dtype=int)
-        for i in range(N_plaquette):
-            plaquette[i] = p_position[i, 1]//3*self.N_col + \
+        n_plaquette = p_position.shape[0]
+        plaquette = np.zeros(n_plaquette, dtype=int)
+        for i in range(n_plaquette):
+            plaquette[i] = p_position[i, 1]//3*self.n_col + \
                 (p_position[i, 0] - p_position[i, 1]//3)//2 - 1
         return plaquette
 
     def mod(self, position):
         """_mod wrapper
         """
-        return _mod(self.N_col, self.N_row, position)
+        return _mod(self.n_col, self.n_row, position)
 
     def mod_1d(self, position):
         """_mod_1d wrapper
         """
-        return _mod_1d(self.N_col, self.N_row, position)
+        return _mod_1d(self.n_col, self.n_row, position)
 
-    def reciprocal_distance(self, p1, p2, PBC=True):
+    def reciprocal_distance(self, p1, p2, pbc=True):
         """Obtain distance and shortest path between two plaquettes.
         
-        If PBC is true, we consider the periodic boundary conditions of the
+        If pbc is true, we consider the periodic boundary conditions of the
         lattice, taking p1 as reference and compute distance with p2 and 
         periodic equivalents of p2. Return the minimum of these distances.
         
@@ -570,7 +569,7 @@ class HexagonalLattice:
             position. First vertex.
             p2 (int): if plaquette index, 1d array (int) if plaquette
             position. Second vertex.
-            PBC (bool): whether to take into account periodic boundary 
+            pbc (bool): whether to take into account periodic boundary 
             conditions.
 
         Returns:
@@ -580,13 +579,13 @@ class HexagonalLattice:
         if np.size(p1) == 1:  # if input is index of plaquette
             p1 = self.p_position[p1, :]
             p2 = self.p_position[p2, :]
-        if not PBC:
-            return _reciprocal_distance(self.N_col, self.N_row, p1, p2)
+        if not pbc:
+            return _reciprocal_distance(self.n_col, self.n_row, p1, p2)
 
-        p2_PBC = _PBC_position(self.N_col, self.N_row, p1, p2)
+        p2_pbc = _pbc_position(self.n_col, self.n_row, p1, p2)
 
-        for i, p in enumerate(p2_PBC):
-            d, path = _reciprocal_distance(self.N_col, self.N_row, p1, p)
+        for i, p in enumerate(p2_pbc):
+            d, path = _reciprocal_distance(self.n_col, self.n_row, p1, p)
             if i == 0:
                 d_min = d
                 path_min = path
@@ -597,7 +596,7 @@ class HexagonalLattice:
 
         return d_min, path_min
 
-    def direct_distance(self, p1, p2, v1_orientation=0, PBC=True):
+    def direct_distance(self, p1, p2, v1_orientation=0, pbc=True):
         """Obtain distance and shortest path between two vertices. 
         
         Analogous to reciprocal_distance
@@ -609,7 +608,7 @@ class HexagonalLattice:
                 Second vertex.
             v1_orientation (int):, orientation of first vertex. Optional,
                 not necessary if p1 and p2 are given as index.
-            PBC (bool): whether to take into account periodic boundary
+            pbc (bool): whether to take into account periodic boundary
                 conditions.
 
         Returns:
@@ -620,15 +619,15 @@ class HexagonalLattice:
             v1_orientation = self.v_orientation[p1]
             p1 = self.v_position[p1, :]
             p2 = self.v_position[p2, :]
-        if not PBC:
-            return _direct_distance(self.N_col, self.N_row, v1_orientation, 
+        if not pbc:
+            return _direct_distance(self.n_col, self.n_row, v1_orientation, 
                                     p1, p2)
 
-        p2_PBC = _PBC_position(self.N_col, self.N_row, p1, p2)
+        p2_pbc = _pbc_position(self.n_col, self.n_row, p1, p2)
 
-        for i, p in enumerate(p2_PBC):
+        for i, p in enumerate(p2_pbc):
             d, path = _direct_distance(
-                self.N_col, self.N_row, v1_orientation, p1, p)
+                self.n_col, self.n_row, v1_orientation, p1, p)
             if i == 0:
                 d_min = d
                 path_min = path
@@ -651,15 +650,15 @@ class HexagonalLattice:
             line (1d array int).
         """
         if direct and axis == 0:
-            line = np.arange(self.N_col*2)
+            line = np.arange(self.n_col*2)
         elif direct and axis == 1:
-            line = np.arange(0, self.N_col*2*self.N_row, self.N_col*2)
+            line = np.arange(0, self.n_col*2*self.n_row, self.n_col*2)
             line = np.concatenate([line, np.arange(
-                self.N_vertex, self.N_row*self.N_col+self.N_vertex, self.N_col)])
+                self.n_vertex, self.n_row*self.n_col+self.n_vertex, self.n_col)])
         elif not direct and axis == 0:
-            line = np.arange(self.N_vertex, self.N_vertex+self.N_col)
+            line = np.arange(self.n_vertex, self.n_vertex+self.n_col)
         elif not direct and axis == 1:
-            line = np.arange(1, self.N_row*self.N_col*2+1, self.N_col*2)
+            line = np.arange(1, self.n_row*self.n_col*2+1, self.n_col*2)
         return line
 
     def plot_edge(self, edge, **kwargs):
@@ -697,21 +696,21 @@ class HexagonalLattice:
         # plt.xlabel("$x$")
         # plt.ylabel("$y$")
         if v_numbers:
-            for i in range(self.N_vertex):  # Vertex numbers
+            for i in range(self.n_vertex):  # Vertex numbers
                 plt.text(self.v_position[i, 0]*.5*self.w, self.v_position[i, 1]
                          * .25*self.h, i, ha="left", va="top", color='b')
         if p_numbers:
-            for i in range(self.N_plaquette):  # Plaquette numbers
+            for i in range(self.n_plaquette):  # Plaquette numbers
                 plt.text(self.p_position[i, 0]*.5*self.w,
                          self.p_position[i, 1]*.25*self.h, i, color='r')
         if e_numbers:
-            for i in range(self.N_edge):  # Edge numbers
+            for i in range(self.n_edge):  # Edge numbers
                 plt.text(np.squeeze(self.edge_position(i))[
                          0]*.5*self.w, np.squeeze(self.edge_position(i))[1]*.25*self.h, i, color='c')
         # Draw vertices
         # plt.scatter(self.v_position[:,0]*.5*self.w, self.v_position[:,1]*.25*self.h, 10, marker='o')
         # Draw edges
-        for i in range(self.N_edge):
+        for i in range(self.n_edge):
             self.plot_edge(i, color='k')
         # Draw Plaquettes
         # plt.scatter(p_position[:,0], p_position[:,1], 10, marker='o')
@@ -731,7 +730,7 @@ class HexagonalLattice:
         plt.scatter(self.v_position[v_syndrome, 0]*.5*self.w, self.v_position[v_syndrome, 1]
                     * .25*self.h, 14, marker='o', color='r', zorder=5)
 
-    def plot_error(self, x_error, Z_error=[]):
+    def plot_error(self, x_error, z_error=[]):
         """Given X and Z errors, plot them in the lattice with different 
         colors.
 
@@ -742,27 +741,27 @@ class HexagonalLattice:
 
         Args:
             x_error (1d array int): list of edges where X occurred.
-            Z_error (1d array int): optional, list of edges where Z occurred.
+            z_error (1d array int): optional, list of edges where Z occurred.
         """
-        if len(x_error) == self.N_edge or len(Z_error) == self.N_edge:
-            X = x_error
-            Z = Z_error
+        if len(x_error) == self.n_edge or len(z_error) == self.n_edge:
+            x = x_error
+            x = z_error
             if len(x_error) == 0:
-                X = np.zeros(self.N_edge, dtype=bool)
-            if len(Z_error) == 0:
-                Z = np.zeros(self.N_edge, dtype=bool)
+                x = np.zeros(self.n_edge, dtype=bool)
+            if len(z_error) == 0:
+                x = np.zeros(self.n_edge, dtype=bool)
         else:
-            X = np.zeros(self.N_edge, dtype=bool)
-            Z = np.zeros(self.N_edge, dtype=bool)
-            X[x_error] = True
-            Z[Z_error] = True
-        for i in range(self.N_edge):
-            if not (X[i] or Z[i]):
+            x = np.zeros(self.n_edge, dtype=bool)
+            x = np.zeros(self.n_edge, dtype=bool)
+            x[x_error] = True
+            x[z_error] = True
+        for i in range(self.n_edge):
+            if not (x[i] or x[i]):
                 color = 'k'
-            elif X[i] and Z[i]:
+            elif x[i] and x[i]:
                 color = 'yellow'
-            elif X[i]:
+            elif x[i]:
                 color = 'r'
-            elif Z[i]:
+            elif x[i]:
                 color = 'lime'
             self.plot_edge(i, color=color)

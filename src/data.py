@@ -7,8 +7,8 @@ import lzma
 from itertools import repeat
 from multiprocessing import Pool, cpu_count
 
-from error_model import XYZ_noise
-from decoding import decoder_dumb
+from error_model import xyz_noise
+from decoding import decoder_simple
 from compute_pattern import bi2de
 
 
@@ -18,20 +18,20 @@ def data_point(p_X, p_Y, p_Z, lattice, KTC=False, seed=None):
 
     while True:
         try:
-            X_edge, Z_edge, v_syn_ind, p_syn_ind = XYZ_noise(
+            x_edge, z_edge, v_syn_ind, p_syn_ind = xyz_noise(
                 p_X, p_Y, p_Z, lattice, KTC=KTC, seed=seed)
             break
-        # XYZ_noise may fail if a long error pattern appears. If p_X and p_Y
+        # xyz_noise may fail if a long error pattern appears. If p_X and p_Y
         # are low this happens very rarely and does not impact the final
         # results.
         except:
             continue
 
-    y = decoder_dumb.decode_result(
-        X_edge, Z_edge, v_syn_ind, p_syn_ind, lattice)
-    v_syn = np.zeros(lattice.N_vertex, dtype=bool)
+    y = decoder_simple.decode_result(
+        x_edge, z_edge, v_syn_ind, p_syn_ind, lattice)
+    v_syn = np.zeros(lattice.n_vertex, dtype=bool)
     v_syn[v_syn_ind] = True
-    p_syn = np.zeros(lattice.N_plaquette, dtype=bool)
+    p_syn = np.zeros(lattice.n_plaquette, dtype=bool)
     p_syn[p_syn_ind] = True
     x = np.concatenate([v_syn, p_syn])
     y = np.squeeze(bi2de(np.concatenate(y)))
@@ -42,7 +42,7 @@ def data_generator(p_X, p_Y, p_Z, lattice, instances, KTC=False):
     """Generate several data points.
     """
     np.random.seed()
-    x = np.zeros((instances, lattice.N_vertex+lattice.N_plaquette), dtype=bool)
+    x = np.zeros((instances, lattice.n_vertex+lattice.n_plaquette), dtype=bool)
     y = np.zeros(instances, dtype='int8')
     for i in range(instances):
         x[i, :], y[i] = data_point(
@@ -81,7 +81,7 @@ def main_data_gen(lattice, p_error, noise_type, start, end, data_type,
         path (str): path where to save the data.
         verbose (bool): if true, more feedback is given.
     """
-    N_size = lattice.N_row
+    N_size = lattice.n_row
     print(f'Computing size={N_size}, p_error={p_error}, '
           f'noise_type={noise_type} ...')
     if KTC:
@@ -98,8 +98,8 @@ def main_data_gen(lattice, p_error, noise_type, start, end, data_type,
     else:
         raise ValueError(f'Invalid noise type: "{noise_type}".')
 
-    subdir_name = f'{lattice.N_row}_{lattice.N_col}_{noise_type}'
-    data_name = f'{lattice.N_row}_{lattice.N_col}_{noise_type}_{p_error}'
+    subdir_name = f'{lattice.n_row}_{lattice.n_col}_{noise_type}'
+    data_name = f'{lattice.n_row}_{lattice.n_col}_{noise_type}_{p_error}'
     if KTC:
         data_name += '_KTC'
         subdir_name += '_KTC'

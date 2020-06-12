@@ -15,9 +15,9 @@ def plaquette_measurement(x_string, lattice):
     obtained when plaquettes are measured, with the probability distribution
     associated with them. 
     
-    Also returns P_z operators that may cause these excitations (Pauli P_z
+    Also returns Z_Q operators that may cause these excitations (Pauli Z_Q
     coefficients are assigned to a plaquette excitation configuration, if they
-     are non-zero).
+    are non-zero).
     
     Args:
         x_string (1d array int): adjacent edge indices.
@@ -40,15 +40,15 @@ def plaquette_measurement(x_string, lattice):
 
     plaquette = np.unique(lattice.v_plaquette[vertex])
     p_position = cp.move_away_boundary_p(
-        lattice.N_row, 
-        lattice.N_col, 
+        lattice.n_row, 
+        lattice.n_col, 
         np.atleast_2d(lattice.p_position[plaquette, :]))
     ind = np.lexsort((p_position[:,1], p_position[:,0]))
     plaquette = plaquette[ind]
 
     edge = lattice.vertex2edge(vertex, both=False)
     e_position = cp.move_away_boundary_e(
-        lattice.N_row, lattice.N_col, lattice.edge_position(edge))
+        lattice.n_row, lattice.n_col, lattice.edge_position(edge))
     ind = np.lexsort((e_position[:,1], e_position[:,0]))
     edge = edge[ind]
 
@@ -70,7 +70,9 @@ def get_X_p_syndrome(x_string, lattice, one_string=True, KTC=False):
     
     Edges in x_string must be contiguous. Syndrome is measured and one of the
     possible plaquette excitation pattern is chosen with np.random.choice. 
-    Returns just one P_z if one_string is True.
+    Returns just one Z_Q if one_string is True.
+
+    X_P = S^+_P \sum_Q c(Z_Q) Z_Q
     
     Args:
         x_string (1d array int): adjacent edge indices.
@@ -79,12 +81,12 @@ def get_X_p_syndrome(x_string, lattice, one_string=True, KTC=False):
         KTC (bool): optional, Kitaev toric code instead of semion code.
 
     Returns:
-        p_syndrome (1d array bool): with length lattice.N_plaquette. True 
+        p_syndrome (1d array bool): with length lattice.n_plaquette. True 
             corresponds to a plaquette excitation.
         Z_operator (list of 1d arrays int): each 1d array containing edge
             indices where a Z error occurred.
     """
-    p_syndrome = np.zeros(lattice.N_plaquette, dtype=bool)
+    p_syndrome = np.zeros(lattice.n_plaquette, dtype=bool)
 
     # Toric code, no plaquette syndrome cause by X errors
     if KTC:
@@ -99,7 +101,7 @@ def get_X_p_syndrome(x_string, lattice, one_string=True, KTC=False):
     p_syndrome[plaquette[p_index]] = True
 
     # Case 0 corresponds to no plaquette excitations
-    # Not interested in closed loops P_z, only open P_z.
+    # Not interested in closed loops Z_Q, only open Z_Q.
     if case==0: return p_syndrome, np.array([], dtype=object) 
     c_choice_ind = np.argwhere(c_class == case)
     Z_operator = []
@@ -112,77 +114,77 @@ def get_X_p_syndrome(x_string, lattice, one_string=True, KTC=False):
     return p_syndrome, Z_operator
 
 
-def get_Z_p_syndrome(Z_error, lattice):
+def get_Z_p_syndrome(z_error, lattice):
     """Computes plaquette syndrome coming from Z errors.
 
     Args:
-        Z_error (1d array bool): with length lattice.N_edge. True if an Z error
+        z_error (1d array bool): with length lattice.n_edge. True if an Z error
             occurred at that edge.
         lattice (lattice object).
 
     Returns:
-        p_syndrome (1d array bool): with length lattice.N_plaquette. True 
+        p_syndrome (1d array bool): with length lattice.n_plaquette. True 
             corresponds to a plaquette excitation.
-        Z_edge (1d array int): edge indices where an Z error occurred.
+        z_edge (1d array int): edge indices where an Z error occurred.
     """
-    p_syndrome = np.zeros(lattice.N_plaquette, dtype=bool)
-    for i in range(lattice.N_edge):
-        if Z_error[i]:
+    p_syndrome = np.zeros(lattice.n_plaquette, dtype=bool)
+    for i in range(lattice.n_edge):
+        if z_error[i]:
             p_index = np.intersect1d(
                 lattice.v_plaquette[lattice.e_vertex[i, 0]], 
                 lattice.v_plaquette[lattice.e_vertex[i, 1]])
             p_syndrome[p_index] = ~p_syndrome[p_index]
-    return p_syndrome, np.squeeze(np.argwhere(Z_error))
+    return p_syndrome, np.squeeze(np.argwhere(z_error))
 
 
 def get_v_syndrome(x_error, lattice):
     """Returns vertex syndrome coming from X errors.
     
     Args:
-        x_error (1d array bool): with length lattice.N_edge. True if an X error
+        x_error (1d array bool): with length lattice.n_edge. True if an X error
             occurred at that edge.
         lattice (lattice object).
 
     Returns:
-        v_syndrome (1d array bool) with length lattice.N_vertex. True 
+        v_syndrome (1d array bool) with length lattice.n_vertex. True 
             corresponds to a vertex excitation.
-        X_edge (1d array int): edge indices where an X error occurred.
+        x_edge (1d array int): edge indices where an X error occurred.
     """
-    v_syndrome = np.zeros(lattice.N_vertex, dtype=bool)
-    for i in range(lattice.N_edge):
+    v_syndrome = np.zeros(lattice.n_vertex, dtype=bool)
+    for i in range(lattice.n_edge):
         if x_error[i]:
             v_syndrome[lattice.e_vertex[i]] = np.logical_not(v_syndrome[lattice.e_vertex[i]])
     return v_syndrome, np.squeeze(np.argwhere(x_error))
 
 
-def uncompress_Z_edge(Z_edge_compressed, one_string=True):
-    """Obtain the Z_edge errors causing the observed plaquette excitations from
-    the 'compressed' version of Z_edge.
+def uncompress_z_edge(z_edge_compressed, one_string=True):
+    """Obtain the z_edge errors causing the observed plaquette excitations from
+    the 'compressed' version of z_edge.
     """
 
     if one_string:
         string = np.array([], int)
-        for s in Z_edge_compressed:
+        for s in z_edge_compressed:
             if len(s):
                 string = np.append(string, s[0])
         string, count = np.unique(string, return_counts=True)
         string = string[count % 2 != 0]
         return [string]
 
-    dim = [len(i) for i in Z_edge_compressed]
-    Z_edge = []
-    if len(Z_edge_compressed):
+    dim = [len(i) for i in z_edge_compressed]
+    z_edge = []
+    if len(z_edge_compressed):
         for i in range(np.prod(dim)):
             ind = np.unravel_index(i,dim)
             string = np.array([], int)
             for j, d in enumerate(ind):
-                string = np.append(string, Z_edge_compressed[j][d])
+                string = np.append(string, z_edge_compressed[j][d])
             string, count = np.unique(string, return_counts=True)
             string = string[count % 2 != 0]
-            Z_edge.append(string)
-    if Z_edge == []:
-        Z_edge = [np.array([],dtype=int)]
-    return Z_edge
+            z_edge.append(string)
+    if z_edge == []:
+        z_edge = [np.array([],dtype=int)]
+    return z_edge
 
 
 def xyz_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
@@ -205,9 +207,9 @@ def xyz_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
             Return all of them or just one.
 
     Returns:
-        X_edge (list of 1d array int): the list only contains one element, 
+        x_edge (list of 1d array int): the list only contains one element, 
             a 1d array with edge indices where an X error occurred.
-        Z_edge (list of 1d arrays int): if one_string is False, returns
+        z_edge (list of 1d arrays int): if one_string is False, returns
             several 1d arrays with all possible Z strings, else just one.
         v_syn_ind (1d array int): excited vertex indices.
         p_syn_ind (1d array int): excited plaquette indices.
@@ -216,33 +218,33 @@ def xyz_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
     if seed is not None:
         np.random.seed(seed)
 
-    error = np.random.choice(4, lattice.N_edge, p=[
+    error = np.random.choice(4, lattice.n_edge, p=[
                              1-p_X-p_Y-p_Z, p_X, p_Y, p_Z])
     x_error = (error==1)
-    Y_error = (error==2)
-    Z_error = (error==3)
-    # Decompose Y_error into X and Z error
-    x_error = np.logical_xor(x_error, Y_error)
-    Z_error = np.logical_xor(Z_error, Y_error)
+    y_error = (error==2)
+    z_error = (error==3)
+    # Decompose y_error into X and Z error
+    x_error = np.logical_xor(x_error, y_error)
+    z_error = np.logical_xor(z_error, y_error)
 
     # Z-error plaquette syndrome
-    p_syndrome, Z_edge = get_Z_p_syndrome(Z_error, lattice)
-    if Z_edge.size:  # if Z_edge non-empty
-        Z_edge = [[Z_edge]]
+    p_syndrome, z_edge = get_Z_p_syndrome(z_error, lattice)
+    if z_edge.size:  # if z_edge non-empty
+        z_edge = [[z_edge]]
     else:
-        Z_edge = [np.array([], dtype=int)]
+        z_edge = [np.array([], dtype=int)]
     # X-error vertex syndrome
-    v_syndrome, X_edge = get_v_syndrome(x_error, lattice)
-    X_edge = [X_edge]
+    v_syndrome, x_edge = get_v_syndrome(x_error, lattice)
+    x_edge = [x_edge]
     # X-error plaquette syndrome
     x_error_group = cp.group_edges(x_error, lattice)
     for x_string in x_error_group:
-        synd, P_z = get_X_p_syndrome(x_string, lattice, one_string, KTC)
+        synd, z_q = get_X_p_syndrome(x_string, lattice, one_string, KTC)
         p_syndrome = np.logical_xor(synd, p_syndrome)
-        if len(P_z)>0:
-            Z_edge.append(P_z)
+        if len(z_q)>0:
+            z_edge.append(z_q)
 
-    Z_edge = uncompress_Z_edge(Z_edge, one_string)
+    z_edge = uncompress_z_edge(z_edge, one_string)
 
     v_syn_ind = np.squeeze(np.argwhere(v_syndrome))
     p_syn_ind = np.squeeze(np.argwhere(p_syndrome))
@@ -250,6 +252,6 @@ def xyz_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
     if plot:
         lattice.plot_lattice(e_numbers=True)
         lattice.plot_syndrome(p_syndrome, v_syndrome)
-        lattice.plot_error(x_error, Z_error)
+        lattice.plot_error(x_error, z_error)
 
-    return X_edge, Z_edge, v_syn_ind, p_syn_ind
+    return x_edge, z_edge, v_syn_ind, p_syn_ind
