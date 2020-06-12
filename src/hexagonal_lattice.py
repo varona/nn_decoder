@@ -745,23 +745,23 @@ class HexagonalLattice:
         """
         if len(x_error) == self.n_edge or len(z_error) == self.n_edge:
             x = x_error
-            x = z_error
+            z = z_error
             if len(x_error) == 0:
                 x = np.zeros(self.n_edge, dtype=bool)
             if len(z_error) == 0:
-                x = np.zeros(self.n_edge, dtype=bool)
+                z = np.zeros(self.n_edge, dtype=bool)
         else:
             x = np.zeros(self.n_edge, dtype=bool)
-            x = np.zeros(self.n_edge, dtype=bool)
+            z = np.zeros(self.n_edge, dtype=bool)
             x[x_error] = True
-            x[z_error] = True
+            z[z_error] = True
         for i in range(self.n_edge):
-            if not (x[i] or x[i]):
+            if not (x[i] or z[i]):
                 color = 'k'
-            elif x[i] and x[i]:
+            elif x[i] and z[i]:
                 color = 'yellow'
             elif x[i]:
                 color = 'r'
-            elif x[i]:
+            elif z[i]:
                 color = 'lime'
             self.plot_edge(i, color=color)
