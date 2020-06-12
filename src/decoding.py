@@ -50,8 +50,8 @@ class Decoder:
             lattice (lattice object): the code lattice.
 
         Returns:
-            X_recover (1d array int): edge indices where to apply a S^+.
-            Z_recover (1d array int): edge indices where to apply a Z-Pauli.
+            x_recover (1d array int): edge indices where to apply a S^+.
+            z_recover (1d array int): edge indices where to apply a Z-Pauli.
         """
         return self._decode_fun(v_syn_ind, p_syn_ind, lattice)
 
@@ -66,36 +66,36 @@ class Decoder:
             lattice (lattice object): the code lattice.
 
         Returns:
-            X_result_0 (1d array bool): True if X logical error in logical
+            x_result_0 (1d array bool): True if X logical error in logical
                 qubit 0.
-            Z_result_0 (1d array bool): logical Z error in qubit 0.
-            X_result_1 (1d array bool): logical X error in qubit 1.
-            Z_result_1 (1d array bool): logical Z error in qubit 1.
+            z_result_0 (1d array bool): logical Z error in qubit 0.
+            x_result_1 (1d array bool): logical X error in qubit 1.
+            z_result_1 (1d array bool): logical Z error in qubit 1.
         """
-        X_recover, Z_recover = self._decode_fun(v_syn_ind,
+        x_recover, z_recover = self._decode_fun(v_syn_ind,
                                                 p_syn_ind,
                                                 lattice)
-        X_total = self._operation_total(x_edge, X_recover)
-        Z_total = self._operation_total(z_edge, Z_recover)
+        x_total = self.operation_total(x_edge, x_recover)
+        z_total = self.operation_total(z_edge, z_recover)
 
-        X_result_0, X_result_1 = self._winding_result(
-            X_total, lattice, direct=True)
-        Z_result_0, Z_result_1 = self._winding_result(
-            Z_total, lattice, direct=False)
+        x_result_0, x_result_1 = self._winding_result(
+            x_total, lattice, direct=True)
+        z_result_0, z_result_1 = self._winding_result(
+            z_total, lattice, direct=False)
 
-        return X_result_0, Z_result_0, X_result_1, Z_result_1
+        return x_result_0, z_result_0, x_result_1, z_result_1
 
     def decode_succesful(self, x_edge, z_edge, v_syn_ind, p_syn_ind, lattice):
         """If no logical error occurred after recovery, returns True.
         """
-        X_result_0, X_result_1, Z_result_0, Z_result_1 = self.decode_result(
+        x_result_0, x_result_1, z_result_0, z_result_1 = self.decode_result(
             x_edge, z_edge, v_syn_ind, p_syn_ind, lattice)
-        X_result = np.logical_or(X_result_0, X_result_1)
-        Z_result = np.logical_or(Z_result_0, Z_result_1)
-        return not np.logical_or(X_result, Z_result)
+        x_result = np.logical_or(x_result_0, x_result_1)
+        z_result = np.logical_or(z_result_0, z_result_1)
+        return not np.logical_or(x_result, z_result)
 
     @staticmethod
-    def _operation_total(e_edge, e_recover):
+    def operation_total(e_edge, e_recover):
         """Join e_edge and e_recover, if edge appears an even number of times,
         delete from final list e_total.
         """
@@ -136,16 +136,21 @@ def decoder_simple_fun(v_syn_ind, p_syn_ind, lattice):
     """Decoder taking all excitations to plaquette and vertex 0.
     """
     # Decode vertex syndrome
-    X_recover = np.array([], dtype=int)
+    x_recover = np.array([], dtype=int)
     for s in v_syn_ind:
-        X_recover = np.append(
-            X_recover, lattice.direct_distance(0, s, pbc=False)[1])
+        x_recover = np.append(
+            x_recover, lattice.direct_distance(0, s, pbc=False)[1])
     # Decode plaquette syndrome
-    Z_recover = np.array([], dtype=int)
+    z_recover = np.array([], dtype=int)
     for s in p_syn_ind:
-        Z_recover = np.append(
-            Z_recover, lattice.reciprocal_distance(0, s, pbc=False)[1])
-    return X_recover, Z_recover
+        z_recover = np.append(
+            z_recover, lattice.reciprocal_distance(0, s, pbc=False)[1])
+    # Simplify operators
+    x_recover, count = np.unique(x_recover, return_counts=True)
+    x_recover = x_recover[count % 2 == 1]
+    z_recover, count = np.unique(z_recover, return_counts=True)
+    z_recover = z_recover[count % 2 == 1]
+    return x_recover, z_recover
 
 
 decoder_simple = Decoder(decoder_simple_fun)

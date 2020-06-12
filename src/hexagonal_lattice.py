@@ -693,28 +693,30 @@ class HexagonalLattice:
         plt.figure()
         if not axis:
             plt.axis('off')
-        # plt.xlabel("$x$")
-        # plt.ylabel("$y$")
         if v_numbers:
             for i in range(self.n_vertex):  # Vertex numbers
-                plt.text(self.v_position[i, 0]*.5*self.w, self.v_position[i, 1]
-                         * .25*self.h, i, ha="left", va="top", color='b')
+                plt.text(
+                    self.v_position[i, 0]*.5*self.w, 
+                    self.v_position[i, 1]* .25*self.h, 
+                    i, 
+                    ha="left", va="top", color='b')
         if p_numbers:
             for i in range(self.n_plaquette):  # Plaquette numbers
-                plt.text(self.p_position[i, 0]*.5*self.w,
-                         self.p_position[i, 1]*.25*self.h, i, color='r')
+                plt.text(
+                    self.p_position[i, 0]*.5*self.w,
+                    self.p_position[i, 1]*.25*self.h, 
+                    i, 
+                    color='r')
         if e_numbers:
             for i in range(self.n_edge):  # Edge numbers
-                plt.text(np.squeeze(self.edge_position(i))[
-                         0]*.5*self.w, np.squeeze(self.edge_position(i))[1]*.25*self.h, i, color='c')
-        # Draw vertices
-        # plt.scatter(self.v_position[:,0]*.5*self.w, self.v_position[:,1]*.25*self.h, 10, marker='o')
+                plt.text(
+                    np.squeeze(self.edge_position(i))[0]*.5*self.w, 
+                    np.squeeze(self.edge_position(i))[1]*.25*self.h, 
+                    i, 
+                    color='c')
         # Draw edges
         for i in range(self.n_edge):
             self.plot_edge(i, color='k')
-        # Draw Plaquettes
-        # plt.scatter(p_position[:,0], p_position[:,1], 10, marker='o')
-        # plt.autoscale(enable=True, axis='both', tight=True)
         # plt.show()
 
     def plot_syndrome(self, p_syndrome=[], v_syndrome=[]):
@@ -726,9 +728,11 @@ class HexagonalLattice:
             v_syndrome (1d array int): vertex indices.
         """
         plt.scatter(self.p_position[p_syndrome, 0]*.5*self.w,
-                    self.p_position[p_syndrome, 1]*.25*self.h, 14, marker='o', color='r')
-        plt.scatter(self.v_position[v_syndrome, 0]*.5*self.w, self.v_position[v_syndrome, 1]
-                    * .25*self.h, 14, marker='o', color='r', zorder=5)
+                    self.p_position[p_syndrome, 1]*.25*self.h, 
+                    14, marker='o', color='r')
+        plt.scatter(self.v_position[v_syndrome, 0]*.5*self.w, 
+                    self.v_position[v_syndrome, 1]*.25*self.h, 
+                    14, marker='o', color='r', zorder=5)
 
     def plot_error(self, x_error, z_error=[]):
         """Given X and Z errors, plot them in the lattice with different 

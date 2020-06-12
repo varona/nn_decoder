@@ -15,7 +15,7 @@ def plaquette_measurement(x_string, lattice):
     obtained when plaquettes are measured, with the probability distribution
     associated with them. 
     
-    Also returns Z_Q operators that may cause these excitations (Pauli Z_Q
+    Also returns z_Q operators that may cause these excitations (Pauli z_Q
     coefficients are assigned to a plaquette excitation configuration, if they
     are non-zero).
     
@@ -28,7 +28,7 @@ def plaquette_measurement(x_string, lattice):
             excitation patterns.
         plaquette (1d array int): plaquettes of the lattice involved.
         c_class (1d array int): plaquette excitation pattern to which each
-            coefficient c(Z_Q) belongs, number of coefficients is
+            coefficient c(z_Q) belongs, number of coefficients is
             2**(len(edge)).
         edge (1d array int): edges involved.
     """
@@ -65,31 +65,31 @@ def plaquette_measurement(x_string, lattice):
     return prob_dist, plaquette, c_class, edge
 
 
-def get_X_p_syndrome(x_string, lattice, one_string=True, KTC=False):
+def get_x_p_syndrome(x_string, lattice, one_string=True, ktc=False):
     """Computes plaquette syndrome coming from a string of X operators. 
     
     Edges in x_string must be contiguous. Syndrome is measured and one of the
     possible plaquette excitation pattern is chosen with np.random.choice. 
-    Returns just one Z_Q if one_string is True.
+    Returns just one z_Q if one_string is True.
 
-    X_P = S^+_P \sum_Q c(Z_Q) Z_Q
+    x_P = S^+_P \sum_Q c(z_Q) z_Q
     
     Args:
         x_string (1d array int): adjacent edge indices.
         lattice (lattice object).
         one_string (bool): optional, return just one of the equivalent Z's.
-        KTC (bool): optional, Kitaev toric code instead of semion code.
+        ktc (bool): optional, Kitaev toric code instead of semion code.
 
     Returns:
         p_syndrome (1d array bool): with length lattice.n_plaquette. True 
             corresponds to a plaquette excitation.
-        Z_operator (list of 1d arrays int): each 1d array containing edge
+        z_operator (list of 1d arrays int): each 1d array containing edge
             indices where a Z error occurred.
     """
     p_syndrome = np.zeros(lattice.n_plaquette, dtype=bool)
 
     # Toric code, no plaquette syndrome cause by X errors
-    if KTC:
+    if ktc:
         return p_syndrome, np.array([], dtype=object)
 
     # Semion code
@@ -101,20 +101,20 @@ def get_X_p_syndrome(x_string, lattice, one_string=True, KTC=False):
     p_syndrome[plaquette[p_index]] = True
 
     # Case 0 corresponds to no plaquette excitations
-    # Not interested in closed loops Z_Q, only open Z_Q.
+    # Not interested in closed loops z_Q, only open z_Q.
     if case==0: return p_syndrome, np.array([], dtype=object) 
     c_choice_ind = np.argwhere(c_class == case)
-    Z_operator = []
+    z_operator = []
     for i in range(len(c_choice_ind)):
         ind = np.squeeze(np.asarray(
             cp.de2bi(c_choice_ind[i], len(edge)), bool))
-        Z_operator.append(edge[ind])
+        z_operator.append(edge[ind])
         if one_string: break
 
-    return p_syndrome, Z_operator
+    return p_syndrome, z_operator
 
 
-def get_Z_p_syndrome(z_error, lattice):
+def get_z_p_syndrome(z_error, lattice):
     """Computes plaquette syndrome coming from Z errors.
 
     Args:
@@ -187,7 +187,7 @@ def uncompress_z_edge(z_edge_compressed, one_string=True):
     return z_edge
 
 
-def xyz_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
+def xyz_noise(p_X, p_Y, p_Z, lattice, ktc=False, plot=False, seed=None,
               one_string=True):
     """Introduce random X-, Y- and Z-Pauli errors in a lattice, measure and 
     return syndrome.
@@ -197,7 +197,7 @@ def xyz_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
         p_Y: float, Y-error probability.
         p_Z: float, Z-error probability.
         lattice (lattice object).
-        KTC (bool): whether to simulate Kitaev toric code instead of semion 
+        ktc (bool): whether to simulate Kitaev toric code instead of semion 
             code.
         plot (bool): wheter to plot lattice with error and syndromes.
         seed (int): random state seed.
@@ -228,7 +228,7 @@ def xyz_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
     z_error = np.logical_xor(z_error, y_error)
 
     # Z-error plaquette syndrome
-    p_syndrome, z_edge = get_Z_p_syndrome(z_error, lattice)
+    p_syndrome, z_edge = get_z_p_syndrome(z_error, lattice)
     if z_edge.size:  # if z_edge non-empty
         z_edge = [[z_edge]]
     else:
@@ -239,7 +239,7 @@ def xyz_noise(p_X, p_Y, p_Z, lattice, KTC=False, plot=False, seed=None,
     # X-error plaquette syndrome
     x_error_group = cp.group_edges(x_error, lattice)
     for x_string in x_error_group:
-        synd, z_q = get_X_p_syndrome(x_string, lattice, one_string, KTC)
+        synd, z_q = get_x_p_syndrome(x_string, lattice, one_string, ktc)
         p_syndrome = np.logical_xor(synd, p_syndrome)
         if len(z_q)>0:
             z_edge.append(z_q)

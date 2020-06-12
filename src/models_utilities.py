@@ -77,7 +77,7 @@ class DataLoader(Sequence):
                 noise_type, 
                 batch_size, 
                 p_error=None, 
-                KTC=False, 
+                ktc=False, 
                 path='../training_data/', 
                 data_modifyer=None, 
                 data_type='data', 
@@ -89,7 +89,7 @@ class DataLoader(Sequence):
             noise_type (str): noise type.
             batch_size (int): batch size for training.
             p_error (float): optional, load only data with this error rate.
-            KTC (bool): if true, load data for Kitaev's toric code.
+            ktc (bool): if true, load data for Kitaev's toric code.
             path (str): path of data.
             data_modifyer (function): optional, modify returned data with this
                 function.
@@ -99,8 +99,8 @@ class DataLoader(Sequence):
         """
         path = os.path.join(path, 
             f'{lattice_shape[0]}_{lattice_shape[1]}_{noise_type}')
-        if KTC:
-            path = path + '_KTC'
+        if ktc:
+            path = path + '_ktc'
 
         self.batch_size = batch_size
         self.lattice_shape = lattice_shape
