@@ -17,7 +17,7 @@ The neural networks are trained to predict which logical error was produced by a
 2. Generate training data for the desired error rate and noise type.
 3. Define the neural network and train.
 
-These steps are shown in notebook training.ipynb. A more detailed explanation of the data format and data generation is given in [data_gen.ipynb](notebooks/data_gen.ipynb).
+These steps are shown in the notebook [training.ipynb](notebooks/training.ipynb). A more detailed explanation of the data format and data generation is given in [data_gen.ipynb](notebooks/data_gen.ipynb).
 The code was run with Python 3.6 and TensorFlow 1.14.
 
 ## References
