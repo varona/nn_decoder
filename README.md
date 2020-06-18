@@ -11,9 +11,9 @@ A decoder for the semion code based on neural networks. The semion code is embed
 
 The neural networks are trained to predict which logical error was produced by a simple decoder. Therefore the decoding process is turned into a classification task with 16 categories. Given the error syndrome, i.e., the 0 or 1 state of each vertex and plaquette in the lattice, the model has to predict the logical error.
 
-## How to train a model
+## How to train the model
 
-1. Produce the pattern data necessary to simulate the code. This data tells us how the code behaves under a X-Pauli errors.
+1. Produce the pattern data necessary to simulate the code. This data tells us how the code behaves under X-Pauli errors.
 2. Generate training data for the desired error rate and noise type.
 3. Define the neural network and train.
 
