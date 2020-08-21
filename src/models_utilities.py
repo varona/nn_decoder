@@ -27,9 +27,6 @@ def data2image(data, lattice_shape, width=0):
                            dtype=np.bool_)
     perm = np.roll(np.arange(lattice_shape[1]*2),  lattice_shape[0])
     for ind in range(len(data[0])):
-        image = np.zeros(
-            (lattice_shape[0]*2+2 * width,  lattice_shape[1]*2+2 * width), 
-            dtype=np.bool_)
         central_image = np.zeros(
             (lattice_shape[0]*2,  lattice_shape[1]*2), dtype=np.bool_)
         # inputs has first vertices then plaquettes
@@ -44,11 +41,11 @@ def data2image(data, lattice_shape, width=0):
             central_image[2*row+1, np.mod(2*col+row+2, 2*lattice_shape[1])] = \
                 data[0][ind][i + n_vertex]
 
-        image = np.zeros(
+        if width!=0:
+            image = np.zeros(
             (lattice_shape[0]*2+2 * width,  lattice_shape[1]*2+2 * width), 
             dtype=np.bool_)
-
-        if width!=0:
+            
             image[0: width,  width:2 * lattice_shape[1] +
                 width] = central_image[- width:, perm]
             image[-width:,  width:2 * lattice_shape[1] +
