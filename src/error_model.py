@@ -29,6 +29,10 @@ def plaquette_measurement(x_string, lattice):
             coefficient c(z_Q) belongs, number of coefficients is
             2**(len(edge)).
         edge (1d array int): edges involved.
+
+    Raises:
+        FileNotFoundError: if pattern corresponding to x_string has no .npz file
+            where data is stored.
     """
     pattern = cp.x_error_pattern(x_string, lattice)
     # Label edges and plaquettes in conn path from left to right and bottom to
@@ -55,12 +59,14 @@ def plaquette_measurement(x_string, lattice):
     if cp.pattern_dec_list[i] == pattern_dec:
         return (cp.pattern_pdata_list[i], plaquette, cp.pattern_cdata_list[i],
                 edge)
+    else:
+        raise FileNotFoundError(f'Pattern data not found for {pattern}')
 
-    # Compute pattern
-    if len(edge) > 12:
-        raise Exception(f'Pattern too long{pattern}, length {len(edge)}')
-    prob_dist, c_class = cp.compute_pattern(pattern, 14, save=True)
-    return prob_dist, plaquette, c_class, edge
+    # Compute pattern on the fly
+    # if len(edge) > 12: # Size limit
+    #     raise Exception(f'Pattern too long{pattern}, length {len(edge)}')
+    # prob_dist, c_class = cp.compute_pattern(pattern, len(edge+1), save=True)
+    # return prob_dist, plaquette, c_class, edge
 
 
 def get_x_p_syndrome(x_string, lattice, one_string=True, ktc=False):

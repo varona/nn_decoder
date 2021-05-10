@@ -21,10 +21,11 @@ def data_point(p_X, p_Y, p_Z, lattice, ktc=False, seed=None):
             x_edge, z_edge, v_syn_ind, p_syn_ind = xyz_noise(
                 p_X, p_Y, p_Z, lattice, ktc=ktc, seed=seed)
             break
-        # xyz_noise may fail if a long error pattern appears. If p_X and p_Y
-        # are low this happens very rarely and does not impact the final
-        # results.
-        except:
+        # xyz_noise may fail if for long error patterns. If p_X and p_Y are
+        # low this happens very rarely and does not impact the final results.
+        except AssertionError:  # String goes all around system
+            continue
+        except FileNotFoundError:  # Pattern data npz file does not exist
             continue
 
     y = decoder_simple.decode_result(
