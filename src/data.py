@@ -13,9 +13,25 @@ from compute_pattern import bi2de
 
 
 def data_point(p_X, p_Y, p_Z, lattice, ktc=False, seed=None):
-    """Generates one data point: syndrome and label.
-    """
+    """Generates one data point: syndrome and label. Also keeps record of the
+    total number of failed attempts that occurred when calling xyz_noise. xyz_noise may fail for long error patterns. If p_X and p_Y are
+    low, this happens very rarely and does not impact the final results.
 
+    Args:
+        p_X (float): x error rate.
+        p_Y (float): y error rate.
+        p_Z (float): z error rate.
+        lattice (HexagonalLattice instance)
+        ktc: whether to produce data for the toric code instead of the semion
+            code.
+        seed: random seed.
+
+    Returns:
+        x (1d array of bool): syndrome.
+        y (int): label.
+        failed: total number of failed attempts when calling xyz_noise.
+    """
+    failed = 0
     while True:
         try:
             x_edge, z_edge, v_syn_ind, p_syn_ind = xyz_noise(
@@ -24,9 +40,9 @@ def data_point(p_X, p_Y, p_Z, lattice, ktc=False, seed=None):
         # xyz_noise may fail if for long error patterns. If p_X and p_Y are
         # low this happens very rarely and does not impact the final results.
         except AssertionError:  # String goes all around system
-            continue
+            failed += 1
         except FileNotFoundError:  # Pattern data npz file does not exist
-            continue
+            failed += 1
 
     y = decoder_simple.decode_result(
         x_edge, z_edge, v_syn_ind, p_syn_ind, lattice)
@@ -36,19 +52,21 @@ def data_point(p_X, p_Y, p_Z, lattice, ktc=False, seed=None):
     p_syn[p_syn_ind] = True
     x = np.concatenate([v_syn, p_syn])
     y = np.squeeze(bi2de(np.concatenate(y)))
-    return x, y.astype('int8')
+    return x, y.astype('int8'), failed
 
 
 def data_generator(p_X, p_Y, p_Z, lattice, n, ktc=False):
-    """Generate several data points.
+    """Generate n data points using data_point function.
     """
     np.random.seed()
     x = np.zeros((n, lattice.n_vertex+lattice.n_plaquette), dtype=bool)
     y = np.zeros(n, dtype='int8')
+    failed = 0
     for i in range(n):
-        x[i, :], y[i] = data_point(
+        x[i, :], y[i], f = data_point(
             p_X, p_Y, p_Z, lattice, ktc=ktc, seed=None)
-    return x, y
+        failed += f
+    return (x, y), failed
 
 
 def compute_and_save(p_X, p_Y, p_Z, lattice, n,
@@ -57,13 +75,15 @@ def compute_and_save(p_X, p_Y, p_Z, lattice, n,
     """
     if verbose:
         print(f'Computing {fname} {i_fname}')
-    data = data_generator(p_X, p_Y, p_Z, lattice, n, ktc)
+    data, failed = data_generator(p_X, p_Y, p_Z, lattice, n, ktc)
 
     fname = fname + str(i_fname)
     if os.path.isfile(fname):
         fname = fname + '_'
     with lzma.open(fname, 'wb') as f:
         pickle.dump(data, f)
+
+    return failed
 
 
 def main_data_gen(lattice, p_error, noise_type, start, end, data_type,
@@ -82,8 +102,8 @@ def main_data_gen(lattice, p_error, noise_type, start, end, data_type,
         path (str): path where to save the data.
         verbose (bool): if true, more feedback is given.
     """
-    N_size = lattice.n_row
-    print(f'Computing size={N_size}, p_error={p_error}, '
+    n_file = int(10**5)
+    print(f'Computing size={lattice.n_row}, p_error={p_error}, '
           f'noise_type={noise_type} ...')
     if ktc:
         print('ktc data generation')
@@ -112,9 +132,15 @@ def main_data_gen(lattice, p_error, noise_type, start, end, data_type,
     i_list = list(range(start, end))
 
     with Pool() as pool:
-        pool.starmap(compute_and_save,
-                     zip(repeat(p_X), repeat(p_Y), repeat(p_Z),
-                         repeat(lattice), repeat(int(10**5)), repeat(ktc),
-                         repeat(fname0), i_list, repeat(verbose)))
+        failed = pool.starmap(compute_and_save,
+                              zip(repeat(p_X), repeat(p_Y), repeat(p_Z),
+                                  repeat(lattice), repeat(n_file),
+                                  repeat(ktc), repeat(fname0), i_list,
+                                  repeat(verbose)))
+
+    failed_ratio = np.sum(failed)/((end-start)*n_file)
+    if failed_ratio > 0.001:
+        print(f'Warning: {np.sum(failed)} failed attempts out of a total of '
+              f'{(end-start)*n_file} generated examples.')
 
     print('Done!')
