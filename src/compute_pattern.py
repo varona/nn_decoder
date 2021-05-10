@@ -17,14 +17,19 @@ PATTERN_PATH = "../pattern"
 
 
 def pattern2dec(pattern, set_list, base, add_len=True):
-    """Maps patterns into decimal numbers."""
+    """Maps patterns into decimal numbers.  Returns -1 if edge number is not
+    found in set_list."""
     if add_len:
         p = np.insert(pattern, 0, np.size(pattern))
     else:
         p = pattern.copy()
     p_new = p.copy()
     for i in range(np.size(p)):
-        p_new[i] = np.squeeze(np.argwhere(p[i] == set_list[i]))
+        ind = np.squeeze(np.argwhere(p[i] == set_list[i]))
+        if ind.size == 0:
+            return -1
+        else:
+            p_new[i] = np.squeeze(np.argwhere(p[i] == set_list[i]))
     return np.ravel_multi_index(p_new, base[:np.size(p)])
 
 
@@ -62,13 +67,11 @@ def load_pattern_data():
     if len(pattern_list) == 0:
         return np.array([]), [], [], [], []
 
-    set_list = [set() for i in range(np.max([len(p) for p in pattern_list]))]
-    for i in range(np.max([len(p) for p in pattern_list])):
+    set_list = [set() for _ in range(np.max([len(p) for p in pattern_list]))]
+    for i in range(len(set_list)):
         for p in pattern_list:
-            try:
+            if i < len(p):
                 set_list[i].add(p[i])
-            except:
-                continue
     set_list = [np.sort(list(s)) for s in set_list]
 
     base = [len(s) for s in set_list]
@@ -82,10 +85,12 @@ def load_pattern_data():
     pattern_pdata_list = [pattern_pdata_list[i] for i in perm]
     pattern_cdata_list = [pattern_cdata_list[i] for i in perm]
 
-    return pattern_dec_list, pattern_pdata_list, pattern_cdata_list, set_list, base
+    return (pattern_dec_list, pattern_pdata_list, pattern_cdata_list, set_list,
+            base)
 
 
-pattern_dec_list, pattern_pdata_list, pattern_cdata_list, set_list, base = load_pattern_data()
+pattern_dec_list, pattern_pdata_list, pattern_cdata_list, set_list, base = \
+    load_pattern_data()
 F012 = np.load(os.path.join(PATTERN_PATH, 'F.npy'))
 
 
