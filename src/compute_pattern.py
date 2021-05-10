@@ -574,22 +574,19 @@ def compute_all_patterns(max_length=14):
             try:
                 pattern = x_error_pattern(
                     x_string, lattice, HexagonalLattice(6, 6))
-            except Exception as error:
+            except AssertionError as error:  # String goes all around system
                 print("Pattern error "+repr(error))
                 continue
 
             if os.path.isfile(os.path.join(PATTERN_PATH, str(pattern)+'.npz')):
                 continue
 
-            try:
-                start_time = time.time()
-                result = compute_pattern(pattern, max_length, save=True)
-                if result:
-                    end_time = time.time()
-                    print('Elapsed time %s minutes'
-                          % str((end_time - start_time)/60.0))
-            except Exception as error:
-                print(repr(error))
+            start_time = time.time()
+            result = compute_pattern(pattern, max_length, save=True)
+            if result:
+                end_time = time.time()
+                print('Elapsed time %s minutes'
+                      % str((end_time - start_time)/60.0))
 
         # if no new pattern found in last 300 seconds: return
         if time.time() - end_time > 300:
