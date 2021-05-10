@@ -13,7 +13,6 @@ from numba import njit
 
 from hexagonal_lattice import _mod, HexagonalLattice
 
-
 PATTERN_PATH = "../pattern"
 
 
@@ -21,10 +20,11 @@ def pattern2dec(pattern, set_list, base, add_len=True):
     """Maps patterns into decimal numbers."""
     if add_len:
         p = np.insert(pattern, 0, np.size(pattern))
-    else: p = pattern.copy()
+    else:
+        p = pattern.copy()
     p_new = p.copy()
     for i in range(np.size(p)):
-        p_new[i] = np.squeeze(np.argwhere(p[i]==set_list[i]))
+        p_new[i] = np.squeeze(np.argwhere(p[i] == set_list[i]))
     return np.ravel_multi_index(p_new, base[:np.size(p)])
 
 
@@ -46,19 +46,20 @@ def load_pattern_data():
     pattern_pdata_list = []
     pattern_cdata_list = []
     for fname in os.listdir(PATTERN_PATH):
-        if not fname.endswith('.npz'): continue
+        if not fname.endswith('.npz'):
+            continue
         string = fname[:-4]
-        string = string.replace('[','')
-        string = string.replace(']','')
+        string = string.replace('[', '')
+        string = string.replace(']', '')
         string = string.strip()
         string = string.split()
         # Add length to distinguish cases such as [0] and [0,1]
-        pattern_list.append([len(string)]+[int(s) for s in string]) 
+        pattern_list.append([len(string)]+[int(s) for s in string])
         data = np.load(os.path.join(PATTERN_PATH, fname))
         pattern_pdata_list.append(data['prob_dist'])
         pattern_cdata_list.append(data['c_class'])
 
-    if len(pattern_list)==0:
+    if len(pattern_list) == 0:
         return np.array([]), [], [], [], []
 
     set_list = [set() for i in range(np.max([len(p) for p in pattern_list]))]
@@ -72,7 +73,7 @@ def load_pattern_data():
 
     base = [len(s) for s in set_list]
     pattern_dec_list = np.zeros(len(pattern_list), dtype=np.int64)
-    for j,p in enumerate(pattern_list):
+    for j, p in enumerate(pattern_list):
         pattern_dec_list[j] = pattern2dec(
             np.array(p, dtype=np.int64), set_list, base, add_len=False)
 
@@ -92,19 +93,20 @@ def de2bi(d, n):
     """Decimal number to binary number."""
     d = np.atleast_1d(d)
     power = 2**np.arange(n)
-    return np.int_(np.floor((d[...,None]%(2*power))/power))
+    return np.int_(np.floor((d[..., None] % (2*power))/power))
 
 
 def bi2de(x):
     """Binary number to decimal number."""
     x = np.atleast_2d(x)
     result = np.zeros(x.shape[0], dtype=int)
-    for k,row in enumerate(x):
+    for k, row in enumerate(x):
         y = 0
-        for i,j in enumerate(row):
-            y += j<<i
+        for i, j in enumerate(row):
+            y += j << i
         result[k] = y
     return result
+
 
 def shift_f(f, shift):
     """Given phases F(\vec i) compute F(\vec i + \vec \alpha_{shift}).
@@ -138,7 +140,7 @@ def pauli_coeff(f):
     if "daemon" in current_process()._config:
         c = np.zeros(2**n, dtype='complex64')
         for j in range(2**n):
-            c[j] = _pauli_coeff(j,n,f)
+            c[j] = _pauli_coeff(j, n, f)
     # Parallel
     else:
         with Pool() as pool:
@@ -153,19 +155,22 @@ def probability(c, alpha_plaquette, classify=False):
     c = np.conjugate(c)
     n = np.int(np.log2(len(c)))
     # compute state X| 0 0 0 0 0 >
-    n_p = alpha_plaquette.shape[0] # number of plaquettes
+    n_p = alpha_plaquette.shape[0]  # number of plaquettes
     c_sum = np.zeros(2**n_p, dtype='complex64')
-    if classify: c_class = -np.ones(2**n, dtype=int)
+    if classify:
+        c_class = -np.ones(2**n, dtype=int)
     for j in range(2**n):
-        if c[j]==0: continue
-        alpha_z = de2bi(j,n)
+        if c[j] == 0:
+            continue
+        alpha_z = de2bi(j, n)
         plaquette_state = np.mod(
             np.matmul(alpha_z, alpha_plaquette.transpose()), 2)
         ind = bi2de(plaquette_state)
         c_sum[ind] = c_sum[ind] + c[j]
         if classify:
-            c_class[j] =  ind
-    if classify: return np.abs(c_sum)**2, c_class
+            c_class[j] = ind
+    if classify:
+        return np.abs(c_sum)**2, c_class
     return np.abs(c_sum)**2
 
 
@@ -174,7 +179,7 @@ def map_f(f, mapping, n_new):
     mapping_new = -np.ones([n_new], dtype=int)
     for j in range(n_new):
         if j in mapping:
-            mapping_new[j] = np.argwhere(mapping==j)
+            mapping_new[j] = np.argwhere(mapping == j)
     f_mapped = _map_f(f, mapping_new, n_new)
     return f_mapped
 
@@ -186,9 +191,9 @@ def _map_f(f, perm, n_new, n=5):
     f_mapped = np.zeros([2**n_new], dtype='complex64')
     for i in range(2**n_new):
         i_vec_mapped = np.squeeze(de2bi(i, n_new))
-        i_vec = np.zeros(n, dtype=int);
+        i_vec = np.zeros(n, dtype=int)
         for j in range(len(perm)):
-            if perm[j]!=-1:
+            if perm[j] != -1:
                 i_vec[perm[j]] = i_vec_mapped[j]
         f_mapped[i] = f[bi2de(i_vec)]
     return f_mapped
@@ -203,10 +208,10 @@ def plaquette_probabilities(mapping, alpha_plaquette, e_orientation):
         f_phases[i, :] = map_f(
             F012[e_orientation[mapping[i, 2]], :], mapping[i, :], n)
     f_total = np.ones(2**n, dtype='complex64')
-    alpha_path = np.zeros([mapping.shape[0],n], dtype=bool)
-    for i,f in enumerate(f_phases):
-        alpha_path[i, mapping[i,2]] = True
-        shift = np.mod(np.sum(alpha_path[0:i,:],axis=0),2)
+    alpha_path = np.zeros([mapping.shape[0], n], dtype=bool)
+    for i, f in enumerate(f_phases):
+        alpha_path[i, mapping[i, 2]] = True
+        shift = np.mod(np.sum(alpha_path[0:i, :], axis=0), 2)
         f_total = f_total*shift_f(f, shift)
     c = pauli_coeff(f_total)
     prob_dist, c_class = probability(c, alpha_plaquette, classify=True)
@@ -222,53 +227,53 @@ def map_length_one_string(x_string, lattice):
         mapping[i, 2] = e
         position = np.squeeze(lattice.edge_position(e))
 
-        edges_1_2 =  lattice.vertex2edge(lattice.e_vertex[e,0], both=False)
+        edges_1_2 = lattice.vertex2edge(lattice.e_vertex[e, 0], both=False)
         edges_1_2 = np.setdiff1d(edges_1_2, e)
 
-        edges_4_5 = lattice.vertex2edge(lattice.e_vertex[e,1], both=False)
+        edges_4_5 = lattice.vertex2edge(lattice.e_vertex[e, 1], both=False)
         edges_4_5 = np.setdiff1d(edges_4_5, e)
 
         if lattice.e_orientation[e] == 0:
             if np.squeeze(lattice.edge_position(edges_1_2[0]))[0] < position[0]:
-                mapping[i,0] = edges_1_2[0]
-                mapping[i,1] = edges_1_2[1]
+                mapping[i, 0] = edges_1_2[0]
+                mapping[i, 1] = edges_1_2[1]
             else:
-                mapping[i,0] = edges_1_2[1]
-                mapping[i,1] = edges_1_2[0]
+                mapping[i, 0] = edges_1_2[1]
+                mapping[i, 1] = edges_1_2[0]
             if np.squeeze(lattice.edge_position(edges_4_5[0]))[0] < position[0]:
-                mapping[i,3] = edges_4_5[0]
-                mapping[i,4] = edges_4_5[1]
+                mapping[i, 3] = edges_4_5[0]
+                mapping[i, 4] = edges_4_5[1]
             else:
-                mapping[i,3] = edges_4_5[1]
-                mapping[i,4] = edges_4_5[0]
+                mapping[i, 3] = edges_4_5[1]
+                mapping[i, 4] = edges_4_5[0]
 
         elif lattice.e_orientation[e] == 1:
             if np.squeeze(lattice.edge_position(edges_1_2[0]))[1] == position[1]:
-                mapping[i,0] = edges_1_2[0]
-                mapping[i,1] = edges_1_2[1]
+                mapping[i, 0] = edges_1_2[0]
+                mapping[i, 1] = edges_1_2[1]
             else:
-                mapping[i,0] = edges_1_2[1]
-                mapping[i,1] = edges_1_2[0]
+                mapping[i, 0] = edges_1_2[1]
+                mapping[i, 1] = edges_1_2[0]
             if np.squeeze(lattice.edge_position(edges_4_5[0]))[1] > position[1]:
-                mapping[i,3] = edges_4_5[0]
-                mapping[i,4] = edges_4_5[1]
+                mapping[i, 3] = edges_4_5[0]
+                mapping[i, 4] = edges_4_5[1]
             else:
-                mapping[i,3] = edges_4_5[1]
-                mapping[i,4] = edges_4_5[0]
+                mapping[i, 3] = edges_4_5[1]
+                mapping[i, 4] = edges_4_5[0]
 
         elif lattice.e_orientation[e] == 2:
             if np.squeeze(lattice.edge_position(edges_1_2[0]))[1] == position[1]:
-                mapping[i,0] = edges_1_2[0]
-                mapping[i,1] = edges_1_2[1]
+                mapping[i, 0] = edges_1_2[0]
+                mapping[i, 1] = edges_1_2[1]
             else:
-                mapping[i,0] = edges_1_2[1]
-                mapping[i,1] = edges_1_2[0]
+                mapping[i, 0] = edges_1_2[1]
+                mapping[i, 1] = edges_1_2[0]
             if np.squeeze(lattice.edge_position(edges_4_5[0]))[1] < position[1]:
-                mapping[i,3] = edges_4_5[0]
-                mapping[i,4] = edges_4_5[1]
+                mapping[i, 3] = edges_4_5[0]
+                mapping[i, 4] = edges_4_5[1]
             else:
-                mapping[i,3] = edges_4_5[1]
-                mapping[i,4] = edges_4_5[0]
+                mapping[i, 3] = edges_4_5[1]
+                mapping[i, 4] = edges_4_5[0]
     return mapping
 
 
@@ -278,11 +283,13 @@ def move_string(n_row, n_col, x_string_pos):
     corner of a lattice with n_row and n_col.
     """
     while True:
-        if np.all(_mod(n_row, n_col, x_string_pos - np.array([1, 3], 
-            np.float64)) == x_string_pos - np.array([1, 3], np.float64)):
+        if np.all(
+                _mod(n_row, n_col, x_string_pos - np.array([1, 3], np.float64)) ==
+                x_string_pos - np.array([1, 3], np.float64)):
             x_string_pos = x_string_pos - np.array([1, 3], np.float64)
-        elif np.all(_mod(n_row, n_col, x_string_pos - np.array([2, 0], 
-            np.float64)) == x_string_pos - np.array([2, 0], np.float64)):
+        elif np.all(
+                _mod(n_row, n_col, x_string_pos - np.array([2, 0], np.float64)) ==
+                x_string_pos - np.array([2, 0], np.float64)):
             x_string_pos = x_string_pos - np.array([2, 0], np.float64)
         else:
             break
@@ -383,7 +390,7 @@ def move_away_boundary_p(n_row, n_col, position):
 
 def group_edges(edge, lattice, direct=True):
     """Given edge list, group edges which are adjacent.
-    
+
     Args:
         edge (1d array): edge indices or bool array of length
             lattice.n_edge.
@@ -408,7 +415,7 @@ def group_edges(edge, lattice, direct=True):
         n_edge = len(edge)
         edge_group = np.concatenate(
             (np.transpose(np.atleast_2d(edge)), -np.ones((n_edge, 1),
-            dtype=int)), 
+                                                         dtype=int)),
             axis=1)
     if n_edge == 0:
         return []
@@ -423,7 +430,7 @@ def group_edges(edge, lattice, direct=True):
                 if check[0] == j or edge_group[j, 1] != -1:
                     continue
                 intersect = np.intersect1d(
-                    edge2vp(edge_group[check[0], 0]), 
+                    edge2vp(edge_group[check[0], 0]),
                     edge2vp(edge_group[j, 0]))
                 if len(intersect) > 0:
                     edge_group[j, 1] = edge_group[check[0], 1]
@@ -435,13 +442,13 @@ def group_edges(edge, lattice, direct=True):
     return edge_group_list
 
 
-def x_error_pattern(x_string, 
-                    lattice, 
-                    lattice_map=HexagonalLattice(6, 6), 
+def x_error_pattern(x_string,
+                    lattice,
+                    lattice_map=HexagonalLattice(6, 6),
                     plot=False):
     """Given a set of connected edges, x_string, identify it uniquely with a 
     pattern.
-    
+
     A pattern is the set of edge indices where x_string lives when mapped into
     the lower left corner of lattice_map.
 
@@ -481,12 +488,12 @@ def x_error_pattern(x_string,
     return pattern
 
 
-def compute_pattern(pattern, 
-                    max_length, 
-                    lattice=HexagonalLattice(6, 6), 
+def compute_pattern(pattern,
+                    max_length,
+                    lattice=HexagonalLattice(6, 6),
                     save=True):
     """Given a pattern, compute data and optionally store it.
-    
+
     Args:
         pattern (1d array int): edge indices of the lattice.
         max_length (int): only compute pattern data if |Conn(pattern)| <= 
@@ -501,21 +508,22 @@ def compute_pattern(pattern,
 
     vertex = np.unique(lattice.edge2vertex(pattern))
     edge = lattice.vertex2edge(vertex, both=False)
-    if len(edge)>max_length: return False
+    if len(edge) > max_length:
+        return False
     print(f'Computing pattern: {pattern}, length {len(edge)}...')
 
     # Sort plaquettes in \cal{B}_{pattern}
     plaquette = np.unique(lattice.v_plaquette[vertex])
     p_position = move_away_boundary_p(
-        lattice.n_row, lattice.n_col, 
+        lattice.n_row, lattice.n_col,
         np.atleast_2d(lattice.p_position[plaquette, :]))
-    ind = np.lexsort((p_position[:,1], p_position[:,0]))
+    ind = np.lexsort((p_position[:, 1], p_position[:, 0]))
     plaquette = plaquette[ind]
 
     # Sort edges in Conn(pattern)
     e_position = move_away_boundary_e(
         lattice.n_row, lattice.n_col, lattice.edge_position(edge))
-    ind = np.lexsort((e_position[:,1], e_position[:,0]))
+    ind = np.lexsort((e_position[:, 1], e_position[:, 0]))
     edge = edge[ind]
     e_orientation = lattice.e_orientation[edge]
 
@@ -523,7 +531,7 @@ def compute_pattern(pattern,
     mapping = map_length_one_string(pattern, lattice)
     for i in range(np.shape(mapping)[0]):
         for j in range(np.shape(mapping)[1]):
-            mapping[i,j] = np.argwhere(mapping[i,j]==edge)
+            mapping[i, j] = np.argwhere(mapping[i, j] == edge)
 
     # Build alpha plaquette
     n = len(edge)
@@ -532,7 +540,7 @@ def compute_pattern(pattern,
         p_edge = np.squeeze(lattice.plaquette2edge(plaquette[i]))
         for e in p_edge:
             if e in edge:
-                ind = np.argwhere(edge==e)
+                ind = np.argwhere(edge == e)
                 alpha_plaquette[i, ind] = True
 
     # Compute probabilities
@@ -553,7 +561,7 @@ def compute_all_patterns(max_length=14):
     end_time = time.time()
     for _ in range(int(1e6)):
         p_X = 0.2
-        lattice = HexagonalLattice(6,6)
+        lattice = HexagonalLattice(6, 6)
         x_error = np.random.choice(2, lattice.n_edge, p=[1-p_X, p_X])
         x_error = x_error.astype(bool)
         x_error_group = group_edges(x_error, lattice, direct=True)
@@ -573,8 +581,8 @@ def compute_all_patterns(max_length=14):
                 result = compute_pattern(pattern, max_length, save=True)
                 if result:
                     end_time = time.time()
-                    print('Elapsed time %s minutes' 
-                    % str((end_time - start_time)/60.0))
+                    print('Elapsed time %s minutes'
+                          % str((end_time - start_time)/60.0))
             except Exception as error:
                 print(repr(error))
 
@@ -583,5 +591,6 @@ def compute_all_patterns(max_length=14):
             print('Pattern data ready.')
             return
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     compute_all_patterns()

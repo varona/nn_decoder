@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from numba import njit
 
 
-# # # # Numba optimized functions # # # #
+# # # # Numba optimized functions # # # #
 
 # Numba optimized functions are defined outside the HexagonalLattice class,
 # since numba cannot handle self object easily and static methods cannot call
@@ -18,13 +18,13 @@ from numba import njit
 @njit
 def _mod(n_col, n_row, position):
     """Applies _mod_1d at each row of the array position.
-    
+
     Args:
         n_col (int).
         n_row (int).
         position (2d array of int or float): each row contains a position in 
         the lattice.
-        
+
     Returns:
         pos (2d array): same shape and type as position.
     """
@@ -42,7 +42,7 @@ def _mod_1d(n_col, n_row, position):
     mapped to a position in the range 
         0 <= y - 3*x < 6*n_col
         0 <= y < 3*n_row
-    
+
     Args:
         n_col (int).
         n_row (int).
@@ -72,7 +72,7 @@ def _mod_1d(n_col, n_row, position):
 @njit('float64[:,:](int64,int64,int64[:])')
 def _edge_position(n_col, n_vertex, edge):
     """Computes the position of the given edges.
-    
+
     Args:
         edge (1d array int): edges.
 
@@ -98,7 +98,7 @@ def _edge_position(n_col, n_vertex, edge):
 @njit('int64[:](int64, int64, int64[:,:], int64[:], int64[:])')
 def _vertex2edge(n_col, n_row, v_position, v_orientation, vertex):
     """Given a list of vertices, returns all edges connected to vertices.
-    
+
     Args:
         n_col (int).
         n_row (int).
@@ -139,7 +139,7 @@ def _vertex2edge(n_col, n_row, v_position, v_orientation, vertex):
 @njit('int64[:](int64, int64, float64[:,:])')
 def _e_position2edge(n_col, n_vertex, e_position):
     """Given edge positions, obtain edge indices.
-    
+
     Args:
         n_col (int).
         n_vertex (int).
@@ -167,7 +167,7 @@ def _direct_distance(n_col, n_row, v1_orientation, p1, p2):
     """Given two vertex positions compute distance and path between them in
     direct lattice. It does not take into account periodic boundary
     conditions in the lattice.
-    
+
     Args:
         n_col (int).
         n_row (int).
@@ -317,10 +317,10 @@ class HexagonalLattice:
         e_orientation (1d array int): edge orientation.
     """
 
-    # Height, width and scale of each hexagon. These are only relevant when
+    # Height, width and scale of each hexagon. These are only relevant when
     # plotting the lattice.
     size = 1.
-    h = 2*size 
+    h = 2*size
     w = np.sqrt(3)*size
 
     def __init__(self, n_row, n_col):
@@ -381,7 +381,7 @@ class HexagonalLattice:
 
     def build_edge(self):
         """Constructs edge data.
-        
+
         Returns:
             e_vertex (2d array int): vertices connected to each edge.
             e_orientation (1d array int): edge orientation.
@@ -436,7 +436,7 @@ class HexagonalLattice:
         """Given a list of vertices, return edges whose associated vertices are
         both contained in the list if both is True. Else return all edges
         associated to vertices.
-        
+
         Args:
             vertex (int or 1d array int): input vertices.
             both (bool): if true, returned edges are only those where both
@@ -461,10 +461,10 @@ class HexagonalLattice:
 
     def plaquette2vertex(self, plaquette):
         """Given a list of plaquettes, return vertices associated.
-        
+
         Args:
             plaquette (integer or 1d array int): plaquettes.
-        
+
         Returns:
             p_vertex (2d array np.int64): shape (len(plaquette), 6) vertices
             where each row corresponds to a plaquette. 6 vertices are 
@@ -479,7 +479,7 @@ class HexagonalLattice:
 
     def plaquette2edge(self, plaquette):
         """Given a list of plaquettes, return belonging edges.
-        
+
         Args:
             plaquette (int): or 1d array (int) of plaquettes.
 
@@ -495,10 +495,10 @@ class HexagonalLattice:
     def edge2vertex(self, edge):
         """Given edge list, obtain vertex indices of the two vertices 
         joined by each edge.
-        
+
         Args:
             edge (integer or 1d array int): edge indices.
-            
+
         Returns:
             (2d array int): shape (len(edge), 2).
         """
@@ -507,7 +507,7 @@ class HexagonalLattice:
 
     def edge_position(self, edge):
         """Returns the position of the given edges.
-        
+
         Args:
             edge (integer or 1d array int).
 
@@ -559,11 +559,11 @@ class HexagonalLattice:
 
     def reciprocal_distance(self, p1, p2, pbc=True):
         """Obtain distance and shortest path between two plaquettes.
-        
+
         If pbc is true, we consider the periodic boundary conditions of the
         lattice, taking p1 as reference and compute distance with p2 and 
         periodic equivalents of p2. Return the minimum of these distances.
-        
+
         Args:
             p1 (int): if plaquette index, 1d array (int) if plaquette
             position. First vertex.
@@ -598,9 +598,9 @@ class HexagonalLattice:
 
     def direct_distance(self, p1, p2, v1_orientation=0, pbc=True):
         """Obtain distance and shortest path between two vertices. 
-        
+
         Analogous to reciprocal_distance
-        
+
         Args:
             p1 (int): if vertex index, 1d array (int) if vertex position. 
                 First vertex.
@@ -620,7 +620,7 @@ class HexagonalLattice:
             p1 = self.v_position[p1, :]
             p2 = self.v_position[p2, :]
         if not pbc:
-            return _direct_distance(self.n_col, self.n_row, v1_orientation, 
+            return _direct_distance(self.n_col, self.n_row, v1_orientation,
                                     p1, p2)
 
         p2_pbc = _pbc_position(self.n_col, self.n_row, p1, p2)
@@ -641,11 +641,11 @@ class HexagonalLattice:
     def gauge_line(self, direct, axis):
         """Outputs string in reciprocal or direct lattice transversing the
         system in direction given by axis.
-        
+
         Args:
             direct (bool): direct or reciprocal.
             axis (int): 0 horizontal, 1 vertical.
-            
+
         Returns:
             line (1d array int).
         """
@@ -663,7 +663,7 @@ class HexagonalLattice:
 
     def plot_edge(self, edge, **kwargs):
         """Plots edge of the lattice. 
-        
+
         Args:
             edge (int): index corresponding to the edge.
         """
@@ -696,23 +696,23 @@ class HexagonalLattice:
         if v_numbers:
             for i in range(self.n_vertex):  # Vertex numbers
                 plt.text(
-                    self.v_position[i, 0]*.5*self.w, 
-                    self.v_position[i, 1]* .25*self.h, 
-                    i, 
+                    self.v_position[i, 0]*.5*self.w,
+                    self.v_position[i, 1] * .25*self.h,
+                    i,
                     ha="left", va="top", color='b')
         if p_numbers:
             for i in range(self.n_plaquette):  # Plaquette numbers
                 plt.text(
                     self.p_position[i, 0]*.5*self.w,
-                    self.p_position[i, 1]*.25*self.h, 
-                    i, 
+                    self.p_position[i, 1]*.25*self.h,
+                    i,
                     color='r')
         if e_numbers:
             for i in range(self.n_edge):  # Edge numbers
                 plt.text(
-                    np.squeeze(self.edge_position(i))[0]*.5*self.w, 
-                    np.squeeze(self.edge_position(i))[1]*.25*self.h, 
-                    i, 
+                    np.squeeze(self.edge_position(i))[0]*.5*self.w,
+                    np.squeeze(self.edge_position(i))[1]*.25*self.h,
+                    i,
                     color='c')
         # Draw edges
         for i in range(self.n_edge):
@@ -728,10 +728,10 @@ class HexagonalLattice:
             v_syndrome (1d array int): vertex indices.
         """
         plt.scatter(self.p_position[p_syndrome, 0]*.5*self.w,
-                    self.p_position[p_syndrome, 1]*.25*self.h, 
+                    self.p_position[p_syndrome, 1]*.25*self.h,
                     14, marker='o', color='r')
-        plt.scatter(self.v_position[v_syndrome, 0]*.5*self.w, 
-                    self.v_position[v_syndrome, 1]*.25*self.h, 
+        plt.scatter(self.v_position[v_syndrome, 0]*.5*self.w,
+                    self.v_position[v_syndrome, 1]*.25*self.h,
                     14, marker='o', color='r', zorder=5)
 
     def plot_error(self, x_error, z_error=[]):

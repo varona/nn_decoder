@@ -3,6 +3,7 @@
 import numpy as np
 from numba import njit
 
+
 @njit
 def _find_index(array, item):
     """Finds first index where array==item. Else returns len(array)."""

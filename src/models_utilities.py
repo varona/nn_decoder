@@ -6,7 +6,6 @@ import pickle
 import os
 import warnings
 
-from time import time
 from numba import njit
 # pylint: disable=import-error
 from tensorflow.keras.utils import Sequence
@@ -23,8 +22,8 @@ def data2image(data, lattice_shape, width=0):
     n_plaquette = lattice_shape[0]*lattice_shape[1]
 
     data_image = np.zeros((len(data[1]), lattice_shape[0]*2+2*width,
-                           lattice_shape[1]*2+2*width, np.int64(1)), 
-                           dtype=np.bool_)
+                           lattice_shape[1]*2+2*width, np.int64(1)),
+                          dtype=np.bool_)
     perm = np.roll(np.arange(lattice_shape[1]*2),  lattice_shape[0])
     for ind in range(len(data[0])):
         central_image = np.zeros(
@@ -41,22 +40,22 @@ def data2image(data, lattice_shape, width=0):
             central_image[2*row+1, np.mod(2*col+row+2, 2*lattice_shape[1])] = \
                 data[0][ind][i + n_vertex]
 
-        if width!=0:
+        if width != 0:
             image = np.zeros(
-            (lattice_shape[0]*2+2 * width,  lattice_shape[1]*2+2 * width), 
-            dtype=np.bool_)
-            
+                (lattice_shape[0]*2+2 * width,  lattice_shape[1]*2+2 * width),
+                dtype=np.bool_)
+
             image[0: width,  width:2 * lattice_shape[1] +
-                width] = central_image[- width:, perm]
+                  width] = central_image[- width:, perm]
             image[-width:,  width:2 * lattice_shape[1] +
-                width] = central_image[0:width, perm]
+                  width] = central_image[0:width, perm]
             image[width:-width,  width:2 * lattice_shape[1] + width] = \
                 central_image
 
-            image[:, 0:width] = image[:, 
-                2*lattice_shape[1]:width+2*lattice_shape[1]]
+            image[:, 0:width] = image[:,
+                                      2*lattice_shape[1]:width+2*lattice_shape[1]]
             image[:, width+2*lattice_shape[1]:2*width+2 *
-                lattice_shape[1]] = image[:, width:width*2]
+                  lattice_shape[1]] = image[:, width:width*2]
         else:
             image = central_image
 
@@ -69,16 +68,16 @@ class DataLoader(Sequence):
     files in path.
     """
 
-    def __init__(self, 
-                lattice_shape, 
-                noise_type, 
-                batch_size, 
-                p_error=None, 
-                ktc=False, 
-                path='../training_data/', 
-                data_modifyer=None, 
-                data_type='data', 
-                batch_ignore=0):
+    def __init__(self,
+                 lattice_shape,
+                 noise_type,
+                 batch_size,
+                 p_error=None,
+                 ktc=False,
+                 path='../training_data/',
+                 data_modifyer=None,
+                 data_type='data',
+                 batch_ignore=0):
         """DataLoader __init__
 
         Args:
@@ -94,8 +93,8 @@ class DataLoader(Sequence):
             batch_ignore (int): ignore the first n batches of data,
                 effectively reducing the dataset. 
         """
-        path = os.path.join(path, 
-            f'{lattice_shape[0]}_{lattice_shape[1]}_{noise_type}')
+        path = os.path.join(
+            path, f'{lattice_shape[0]}_{lattice_shape[1]}_{noise_type}')
         if ktc:
             path = path + '_ktc'
 
@@ -130,7 +129,7 @@ class DataLoader(Sequence):
 
     def inx_to_file_line(self, idx):
         file_index = np.mod(idx*self.batch_size//self.inst_per_file,
-                      len(self.data_fname))
+                            len(self.data_fname))
         line = idx*self.batch_size % self.inst_per_file
         return file_index, line
 
@@ -201,14 +200,14 @@ class ReduceLROnPlateau(Callback):
         batch_period: monitor metric with this period.
     """
 
-    def __init__(self, 
-                 monitor='loss', 
-                 factor=0.1, 
+    def __init__(self,
+                 monitor='loss',
+                 factor=0.1,
                  patience=10,
-                 verbose=1, 
-                 mode='auto', 
-                 min_delta=1e-4, 
-                 cooldown=0, 
+                 verbose=1,
+                 mode='auto',
+                 min_delta=1e-4,
+                 cooldown=0,
                  min_lr=0,
                  batch_period=2000):
         super(ReduceLROnPlateau, self).__init__()
@@ -294,7 +293,7 @@ class ReduceLROnPlateau(Callback):
 
     def in_cooldown(self):
         return self.cooldown_counter > 0
-        
+
 
 class EarlyStopping(Callback):
     """Monitor val_acc, save model if it increases, early stop if it stops
@@ -311,10 +310,10 @@ class EarlyStopping(Callback):
         min_delta (float): threshold for measuring the new optimum.
     """
 
-    def __init__(self, 
+    def __init__(self,
                  monitor='acc',
-                 batch_period=2000, 
-                 patience=2, 
+                 batch_period=2000,
+                 patience=2,
                  min_delta=0.0002):
 
         self.monitor = monitor
@@ -353,14 +352,14 @@ class EarlyStopping(Callback):
             self.wait += 1
             if self.wait >= self.patience:
                 self.model.stop_training = True
-                print(f'\nEarly stopping: {self.monitor} did not improve. '\
-                f'Before: {self.best:.4f}, afer: {current:.4f}, '\
-                f'diff = {current-self.best:.4f}.\n')
+                print(f'\nEarly stopping: {self.monitor} did not improve. '
+                      f'Before: {self.best:.4f}, afer: {current:.4f}, '
+                      f'diff = {current-self.best:.4f}.\n')
 
 
 class CustomSaver(Callback):
     """Computes val_acc and saves the model if it improves.
-    
+
     Args:
         val_sequence (sequence object): validation data.
         model_name (str): name to save model.

@@ -7,13 +7,12 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, add
 from tensorflow.keras.layers import Input, Flatten, Lambda, Activation
 from tensorflow.keras.regularizers import l2
-from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Model
 
 
-def periodic_padding(tensor, 
-                     axis=(1, 2), 
-                     padding=(1, 1), 
+def periodic_padding(tensor,
+                     axis=(1, 2),
+                     padding=(1, 1),
                      one_sided=False):
     """Add periodic padding to a tensor for specified axis.
 
@@ -50,13 +49,13 @@ def periodic_padding(tensor,
                     for i in range(ndim)]
         if ax == 1:
             right = tf.roll(
-                            tensor[ind_right], 
-                            shift=tensor.get_shape().as_list()[2]//2,
-                            axis=2)
+                tensor[ind_right],
+                shift=tensor.get_shape().as_list()[2]//2,
+                axis=2)
             left = tf.roll(
-                            tensor[ind_left], 
-                            shift=tensor.get_shape().as_list()[2]//2,
-                            axis=2)
+                tensor[ind_left],
+                shift=tensor.get_shape().as_list()[2]//2,
+                axis=2)
         else:
             right = tensor[ind_right]
             left = tensor[ind_left]

@@ -5,6 +5,7 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Activation, BatchNormalization
 from tensorflow.keras.layers import Dropout
 
+
 def mlp(hidden, nodes, input_size, dropout=0):
     """Multilayer perceptron: (Dense+Droupout+BatchNorm+ReLu)
 

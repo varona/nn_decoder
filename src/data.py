@@ -5,7 +5,7 @@ import os
 import pickle
 import lzma
 from itertools import repeat
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 
 from error_model import xyz_noise
 from decoding import decoder_simple
@@ -50,7 +50,7 @@ def data_generator(p_X, p_Y, p_Z, lattice, n, ktc=False):
     return x, y
 
 
-def compute_and_save(p_X, p_Y, p_Z, noise_type, lattice, n, 
+def compute_and_save(p_X, p_Y, p_Z, lattice, n,
                      ktc, fname, i_fname, verbose=False):
     """Generate data with data_generator and save in fname.
     """
@@ -65,7 +65,7 @@ def compute_and_save(p_X, p_Y, p_Z, noise_type, lattice, n,
         pickle.dump(data, f)
 
 
-def main_data_gen(lattice, p_error, noise_type, start, end, data_type, 
+def main_data_gen(lattice, p_error, noise_type, start, end, data_type,
                   ktc=False, path='../training_data/', verbose=False):
     """Produces data files from start to end number, with given 
     characteristics. Each file contains 1e5 data points.
@@ -111,9 +111,9 @@ def main_data_gen(lattice, p_error, noise_type, start, end, data_type,
     i_list = list(range(start, end))
 
     with Pool() as pool:
-        pool.starmap(compute_and_save, 
-            zip(repeat(p_X), repeat(p_Y), repeat(p_Z), repeat(noise_type),
-                repeat(lattice), repeat(int(10**5)), repeat(ktc), 
-                repeat(fname0), i_list, repeat(verbose)))
+        pool.starmap(compute_and_save,
+                     zip(repeat(p_X), repeat(p_Y), repeat(p_Z),
+                         repeat(lattice), repeat(int(10**5)), repeat(ktc),
+                         repeat(fname0), i_list, repeat(verbose)))
 
     print('Done!')
