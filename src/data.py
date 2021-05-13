@@ -14,8 +14,9 @@ from compute_pattern import bi2de
 
 def data_point(p_X, p_Y, p_Z, lattice, ktc=False, seed=None):
     """Generates one data point: syndrome and label. Also keeps record of the
-    total number of failed attempts that occurred when calling xyz_noise. xyz_noise may fail for long error patterns. If p_X and p_Y are
-    low, this happens very rarely and does not impact the final results.
+    total number of failed attempts that occurred when calling xyz_noise. 
+    xyz_noise may fail for long error patterns. If p_X and p_Y are low, this
+    happens very rarely and does not impact the final results.
 
     Args:
         p_X (float): x error rate.
